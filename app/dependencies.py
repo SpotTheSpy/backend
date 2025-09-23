@@ -4,7 +4,7 @@ from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
-from app.assets.controllers.redis.locale import LocalesController
+from app.assets.controllers.redis.locales import LocalesController
 from app.database.database import Database
 from config import Config
 

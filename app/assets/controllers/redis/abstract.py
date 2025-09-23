@@ -22,7 +22,7 @@ class RedisController(ABC):
             *,
             exact_key: bool = False
     ) -> None:
-        await self._redis.set(key if exact_key else f"monopoly:{key}", json.dumps(value))
+        await self._redis.set(key if exact_key else f"spotthespy:{key}", json.dumps(value))
 
     async def get(
             self,
@@ -30,7 +30,7 @@ class RedisController(ABC):
             *,
             exact_key: bool = False
     ) -> Any:
-        serialized: str = await self._redis.get(key if exact_key else f"monopoly:{key}")
+        serialized: str = await self._redis.get(key if exact_key else f"spotthespy:{key}")
         return json.loads(serialized) if serialized is not None else None
 
     async def get_keys(
@@ -39,7 +39,7 @@ class RedisController(ABC):
             pattern: str = "",
             exact_pattern: bool = False
     ) -> Tuple[str, ...]:
-        keys: List[bytes] = await self._redis.keys(f"*{pattern}*" if exact_pattern else f"*monopoly:{pattern}*")
+        keys: List[bytes] = await self._redis.keys(f"*{pattern}*" if exact_pattern else f"*spotthespy:{pattern}*")
         return tuple([key.decode() for key in keys])
 
     async def exists(
@@ -48,7 +48,7 @@ class RedisController(ABC):
             *,
             exact_key: bool = False
     ) -> bool:
-        return bool(await self._redis.exists(key if exact_key else f"monopoly:{key}"))
+        return bool(await self._redis.exists(key if exact_key else f"spotthespy:{key}"))
 
     async def remove(
             self,
@@ -56,4 +56,4 @@ class RedisController(ABC):
             *,
             exact_key: bool = False
     ) -> None:
-        await self._redis.delete(key if exact_key else f"monopoly:{key}")
+        await self._redis.delete(key if exact_key else f"spotthespy:{key}")
