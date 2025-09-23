@@ -1,3 +1,91 @@
-from fastapi import APIRouter
+from typing import Annotated
+
+from fastapi import APIRouter, Depends
+from sqlalchemy import select, or_
+from sqlalchemy.ext.asyncio import AsyncSession
+from starlette import status
+
+from app.api.v1.exceptions.already_exists import AlreadyExistsError
+from app.api.v1.exceptions.not_found import NotFoundError
+from app.api.v1.users.models import CreateUserModel, UserModel, UserLocaleModel
+from app.database.models import User
+from app.dependencies import database_session
 
 users_router = APIRouter(prefix="/users", tags=["Users"])
+
+
+@users_router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    response_model=UserModel,
+    description="Create a new user"
+)
+async def create_user(
+        user_model: CreateUserModel,
+        session: Annotated[AsyncSession, Depends(database_session)]
+) -> UserModel:
+    if await session.scalar(
+        select(User)
+        .filter(
+            or_(
+                User.telegram_id == user_model.telegram_id,
+                User.username == user_model.username
+            )
+        )
+        .exists()
+        .select()
+    ):
+        raise AlreadyExistsError("User with provided credentials already exists")
+
+    user = User(
+        telegram_id=user_model.telegram_id,
+        first_name=user_model.first_name,
+        username=user_model.username,
+        locale=user_model.locale
+    )
+    session.add(user)
+    await session.commit()
+
+    return UserModel.from_database_model(user)
+
+
+@users_router.get(
+    "/{telegram_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=UserModel,
+    description="Get user by telegram ID"
+)
+async def get_user_by_telegram_id(
+        telegram_id: int,
+        session: Annotated[AsyncSession, Depends(database_session)]
+) -> UserModel:
+    user: User = await session.scalar(
+        select(User)
+        .filter_by(telegram_id=telegram_id)
+    )
+
+    if user is None:
+        raise NotFoundError("User with provided telegram ID was not found")
+
+    return UserModel.from_database_model(user)
+
+
+@users_router.get(
+    "/locale/{telegram_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=UserLocaleModel,
+    description="Get user locale by telegram ID"
+)
+async def get_user_locale_by_telegram_id(
+        telegram_id: int,
+        session: Annotated[AsyncSession, Depends(database_session)]
+) -> UserLocaleModel:
+    user: User = await session.scalar(
+        select(User)
+        .filter_by(telegram_id=telegram_id)
+    )
+
+    if user is None:
+        raise NotFoundError("User with provided telegram ID was not found")
+
+    return UserLocaleModel.from_database_model(user)

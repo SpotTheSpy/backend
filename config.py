@@ -1,8 +1,12 @@
+from typing import ClassVar
+
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings
 
 
 class Config(BaseSettings):
+    title: ClassVar[str] = "SpotTheSpy"
+
     api_key: SecretStr
     jwt_key: SecretStr
 

@@ -1,13 +1,15 @@
 import asyncio
 import sys
+from asyncio import SelectorEventLoop
 
-import uvicorn
+import uvicorn.loops.asyncio
 
 from app.logging import API_LOG_CONFIG
 
 if __name__ == "__main__":
     if sys.platform == "win32":
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    uvicorn.loops.asyncio.asyncio_loop_factory = lambda use_subprocess: SelectorEventLoop
 
     uvicorn.run(
         "app.asgi:app",
