@@ -4,11 +4,13 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query
 from fastapi_sa_orm_filter import FilterCore
 from sqlalchemy import select, or_, update, Select, delete
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from app.api.v1.exceptions.already_exists import AlreadyExistsError
 from app.api.v1.exceptions.not_found import NotFoundError
+from app.api.v1.exceptions.unique_violation import UniqueViolationError
 from app.api.v1.models.pagination import PaginationParams, PaginatedResult
 from app.api.v1.security.authenticator import Authenticator
 from app.api.v1.users.filters import users_filters
@@ -156,7 +158,11 @@ async def update_user_by_uuid(
         .filter_by(id=user.id)
         .values(**user_model.model_dump(exclude_unset=True))
     )
-    await session.commit()
+
+    try:
+        await session.commit()
+    except IntegrityError:
+        raise UniqueViolationError("User with specified fields already exists")
 
 
 @users_router.put(
@@ -183,7 +189,11 @@ async def update_user_by_telegram_id(
         .filter_by(id=user.id)
         .values(**user_model.model_dump(exclude_unset=True))
     )
-    await session.commit()
+
+    try:
+        await session.commit()
+    except IntegrityError:
+        raise UniqueViolationError("User with specified fields already exists")
 
 
 @users_router.delete(
