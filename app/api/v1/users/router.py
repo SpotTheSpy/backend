@@ -1,14 +1,18 @@
-from typing import Annotated
+from typing import Annotated, Sequence
+from uuid import UUID
 
-from fastapi import APIRouter, Depends
-from sqlalchemy import select, or_, update
+from fastapi import APIRouter, Depends, Query
+from fastapi_sa_orm_filter import FilterCore
+from sqlalchemy import select, or_, update, Select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from app.api.v1.exceptions.already_exists import AlreadyExistsError
 from app.api.v1.exceptions.not_found import NotFoundError
+from app.api.v1.models.pagination import PaginationParams, PaginatedResult
 from app.api.v1.security.authenticator import Authenticator
-from app.api.v1.users.models import CreateUserModel, UserModel, UserLocaleModel, UpdateUserLocaleModel
+from app.api.v1.users.filters import users_filters
+from app.api.v1.users.models import CreateUserModel, UserModel, UserLocaleModel, UpdateUserLocaleModel, UpdateUserModel
 from app.assets.controllers.redis.locale import LocalesController
 from app.database.models import User
 from app.dependencies import database_session, locales_dependency
@@ -20,8 +24,8 @@ users_router = APIRouter(prefix="/users", tags=["Users"])
     "",
     status_code=status.HTTP_201_CREATED,
     response_model=UserModel,
-    description="Create a new user",
-    dependencies=[Authenticator.verify_api_key()]
+    dependencies=[Authenticator.verify_api_key()],
+    name="Create a new user"
 )
 async def create_user(
         user_model: CreateUserModel,
@@ -56,11 +60,62 @@ async def create_user(
 
 
 @users_router.get(
-    "/{telegram_id}",
+    "",
+    status_code=status.HTTP_200_OK,
+    response_model=PaginatedResult[UserModel],
+    dependencies=[Authenticator.verify_api_key()],
+    name="Get all users"
+)
+async def get_users(
+        pagination: Annotated[PaginationParams, Depends()],
+        session: Annotated[AsyncSession, Depends(database_session)],
+        filters: str = Query(default=""),
+) -> PaginatedResult[UserModel]:
+    query: Select = pagination.apply(
+        FilterCore(User, users_filters).get_query(filters)
+    )
+
+    users: Sequence[User] = (
+        await session.execute(
+            query
+            .order_by(User.created_at)
+        )
+    ).unique().scalars().all()
+
+    return pagination.create_response(
+        results=[UserModel.from_database_model(user) for user in users],
+        model=UserModel
+    )
+
+
+@users_router.get(
+    "/{user_id}",
     status_code=status.HTTP_200_OK,
     response_model=UserModel,
-    description="Get user by telegram ID",
-    dependencies=[Authenticator.verify_api_key()]
+    dependencies=[Authenticator.verify_api_key()],
+    name="Get user by UUID"
+)
+async def get_user_by_uuid(
+        user_id: UUID,
+        session: Annotated[AsyncSession, Depends(database_session)]
+) -> UserModel:
+    user: User = await session.scalar(
+        select(User)
+        .filter_by(id=user_id)
+    )
+
+    if user is None:
+        raise NotFoundError("User with provided UUID was not found")
+
+    return UserModel.from_database_model(user)
+
+
+@users_router.get(
+    "/by_telegram_id/{telegram_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=UserModel,
+    dependencies=[Authenticator.verify_api_key()],
+    name="Get user by telegram ID"
 )
 async def get_user_by_telegram_id(
         telegram_id: int,
@@ -77,12 +132,116 @@ async def get_user_by_telegram_id(
     return UserModel.from_database_model(user)
 
 
+@users_router.put(
+    "/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Authenticator.verify_api_key()],
+    name="Update user by UUID"
+)
+async def update_user_by_uuid(
+        user_id: UUID,
+        user_model: UpdateUserModel,
+        session: Annotated[AsyncSession, Depends(database_session)]
+) -> None:
+    user: User = await session.scalar(
+        select(User)
+        .filter_by(id=user_id)
+    )
+
+    if user is None:
+        raise NotFoundError("User with provided UUID was not found")
+
+    await session.execute(
+        update(User)
+        .filter_by(id=user.id)
+        .values(**user_model.model_dump(exclude_unset=True))
+    )
+    await session.commit()
+
+
+@users_router.put(
+    "/by_telegram_id/{telegram_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Authenticator.verify_api_key()],
+    name="Update user by telegram ID"
+)
+async def update_user_by_telegram_id(
+        telegram_id: int,
+        user_model: UpdateUserModel,
+        session: Annotated[AsyncSession, Depends(database_session)]
+) -> None:
+    user: User = await session.scalar(
+        select(User)
+        .filter_by(telegram_id=telegram_id)
+    )
+
+    if user is None:
+        raise NotFoundError("User with provided UUID was not found")
+
+    await session.execute(
+        update(User)
+        .filter_by(id=user.id)
+        .values(**user_model.model_dump(exclude_unset=True))
+    )
+    await session.commit()
+
+
+@users_router.delete(
+    "/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Authenticator.verify_api_key()],
+    name="Delete user by UUID"
+)
+async def delete_user_by_uuid(
+        user_id: UUID,
+        session: Annotated[AsyncSession, Depends(database_session)]
+) -> None:
+    user: User = await session.scalar(
+        select(User)
+        .filter_by(id=user_id)
+    )
+
+    if user is None:
+        raise NotFoundError("User with provided UUID was not found")
+
+    await session.execute(
+        delete(User)
+        .filter_by(id=user.id)
+    )
+    await session.commit()
+
+
+@users_router.delete(
+    "/by_telegram_id/{telegram_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Authenticator.verify_api_key()],
+    name="Delete user by telegram ID"
+)
+async def delete_user_by_telegram_id(
+        telegram_id: int,
+        session: Annotated[AsyncSession, Depends(database_session)]
+) -> None:
+    user: User = await session.scalar(
+        select(User)
+        .filter_by(telegram_id=telegram_id)
+    )
+
+    if user is None:
+        raise NotFoundError("User with provided UUID was not found")
+
+    await session.execute(
+        delete(User)
+        .filter_by(id=user.id)
+    )
+    await session.commit()
+
+
 @users_router.get(
     "/locales/{telegram_id}",
     status_code=status.HTTP_200_OK,
     response_model=UserLocaleModel,
-    description="Get user locale by telegram ID",
-    dependencies=[Authenticator.verify_api_key()]
+    dependencies=[Authenticator.verify_api_key()],
+    name="Get user locale by telegram ID"
 )
 async def get_user_locale_by_telegram_id(
         telegram_id: int,
@@ -110,8 +269,8 @@ async def get_user_locale_by_telegram_id(
 @users_router.put(
     "/locales/{telegram_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    description="Update user locale by telegram ID",
-    dependencies=[Authenticator.verify_api_key()]
+    dependencies=[Authenticator.verify_api_key()],
+    name="Update user locale by telegram ID"
 )
 async def update_user_locale_by_telegram_id(
         telegram_id: int,
@@ -129,7 +288,7 @@ async def update_user_locale_by_telegram_id(
 
     await session.execute(
         update(User)
-        .filter_by(telegram_id=telegram_id)
+        .filter_by(id=user.id)
         .values(locale=locale_model.locale)
     )
     await session.commit()

@@ -397,6 +397,23 @@ standard = ["email-validator (>=2.0.0)", "fastapi-cli[standard] (>=0.0.8)", "htt
 standard-no-fastapi-cloud-cli = ["email-validator (>=2.0.0)", "fastapi-cli[standard-no-fastapi-cloud-cli] (>=0.0.8)", "httpx (>=0.23.0,<1.0.0)", "jinja2 (>=3.1.5)", "python-multipart (>=0.0.18)", "uvicorn[standard] (>=0.12.0)"]
 
 [[package]]
+name = "fastapi-sa-orm-filter"
+version = "0.2.4"
+description = "FastAPI-SQLAlchemy filter, transform request query string to SQLAlchemy orm query"
+optional = false
+python-versions = ">=3.10"
+files = [
+    {file = "fastapi_sa_orm_filter-0.2.4-py3-none-any.whl", hash = "sha256:4ed2d8c3841885284140b05fb5b7e4a19d66a9cd7a72f829045019ca34445e73"},
+    {file = "fastapi_sa_orm_filter-0.2.4.tar.gz", hash = "sha256:f12ec0676f325e8a19d93053b302a6caa8e107f30cabc5dab1f1ac1b0819ba6c"},
+]
+
+[package.dependencies]
+fastapi = "*"
+pydantic = "*"
+sqlalchemy = "*"
+sqlalchemy-to-pydantic = "*"
+
+[[package]]
 name = "frozenlist"
 version = "1.7.0"
 description = "A list-like structure which implements collections.abc.MutableSequence"
@@ -1419,6 +1436,21 @@ pymysql = ["pymysql"]
 sqlcipher = ["sqlcipher3_binary"]
 
 [[package]]
+name = "sqlalchemy-to-pydantic"
+version = "0.0.8"
+description = "Tools to convert SQLAlchemy models to Pydantic models"
+optional = false
+python-versions = ">=3.10,<4.0"
+files = [
+    {file = "sqlalchemy_to_pydantic-0.0.8-py3-none-any.whl", hash = "sha256:e2b13b793b983cc43ec2291bd0dadc731c278017814b98140df8f1c468c4f837"},
+    {file = "sqlalchemy_to_pydantic-0.0.8.tar.gz", hash = "sha256:7af94ecd04c3ca1243975bba5e8e2b2e3928faf9f5ad98a555b0a1b90eec344e"},
+]
+
+[package.dependencies]
+pydantic = ">=2.3.0,<3.0.0"
+sqlalchemy = ">=2.0.20,<3.0.0"
+
+[[package]]
 name = "starlette"
 version = "0.48.0"
 description = "The little ASGI library that shines."
@@ -1610,4 +1642,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.13"
-content-hash = "259ab074ffdade6bf80b65eafc1c0eaba74ec46be0274b90da91b6830882889b"
+content-hash = "856697bb110fad7c33421fa95ee92fac6c8232592f74b4a2a92a9f5b0dafd3e2"
