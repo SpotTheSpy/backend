@@ -1,0 +1,8 @@
+*.env
+*.conf
+.venv
+.idea
+
+__pycache__/
+*.py[cod]
+*.so
