@@ -1,15 +1,16 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from app.api.v1.exceptions.already_exists import AlreadyExistsError
 from app.api.v1.exceptions.not_found import NotFoundError
-from app.api.v1.users.models import CreateUserModel, UserModel, UserLocaleModel
+from app.api.v1.users.models import CreateUserModel, UserModel, UserLocaleModel, UpdateUserLocaleModel
+from app.assets.controllers.redis.locale import LocalesController
 from app.database.models import User
-from app.dependencies import database_session
+from app.dependencies import database_session, locales_dependency
 
 users_router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -22,7 +23,8 @@ users_router = APIRouter(prefix="/users", tags=["Users"])
 )
 async def create_user(
         user_model: CreateUserModel,
-        session: Annotated[AsyncSession, Depends(database_session)]
+        session: Annotated[AsyncSession, Depends(database_session)],
+        locales: Annotated[LocalesController, Depends(locales_dependency)]
 ) -> UserModel:
     if await session.scalar(
         select(User)
@@ -45,6 +47,8 @@ async def create_user(
     )
     session.add(user)
     await session.commit()
+
+    await locales.create_locale(user.telegram_id, user.locale)
 
     return UserModel.from_database_model(user)
 
@@ -71,15 +75,21 @@ async def get_user_by_telegram_id(
 
 
 @users_router.get(
-    "/locale/{telegram_id}",
+    "/locales/{telegram_id}",
     status_code=status.HTTP_200_OK,
     response_model=UserLocaleModel,
     description="Get user locale by telegram ID"
 )
 async def get_user_locale_by_telegram_id(
         telegram_id: int,
-        session: Annotated[AsyncSession, Depends(database_session)]
+        session: Annotated[AsyncSession, Depends(database_session)],
+        locales: Annotated[LocalesController, Depends(locales_dependency)]
 ) -> UserLocaleModel:
+    locale: str = await locales.get_locale(telegram_id)
+
+    if locale is not None:
+        return UserLocaleModel(locale=locale)
+
     user: User = await session.scalar(
         select(User)
         .filter_by(telegram_id=telegram_id)
@@ -88,4 +98,35 @@ async def get_user_locale_by_telegram_id(
     if user is None:
         raise NotFoundError("User with provided telegram ID was not found")
 
+    await locales.create_locale(user.telegram_id, user.locale)
+
     return UserLocaleModel.from_database_model(user)
+
+
+@users_router.put(
+    "/locales/{telegram_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    description="Update user locale by telegram ID"
+)
+async def update_user_locale_by_telegram_id(
+        telegram_id: int,
+        locale_model: UpdateUserLocaleModel,
+        session: Annotated[AsyncSession, Depends(database_session)],
+        locales: Annotated[LocalesController, Depends(locales_dependency)]
+) -> None:
+    user: User = await session.scalar(
+        select(User)
+        .filter_by(telegram_id=telegram_id)
+    )
+
+    if user is None:
+        raise NotFoundError("User with provided telegram ID was not found")
+
+    await session.execute(
+        update(User)
+        .filter_by(telegram_id=telegram_id)
+        .values(locale=locale_model.locale)
+    )
+    await session.commit()
+
+    await locales.create_locale(user.telegram_id, locale_model.locale)
