@@ -15,7 +15,7 @@ class UserModel(BaseModel):
     telegram_id: int
     first_name: str = Field(min_length=1, max_length=64)
     username: str = Field(min_length=5, max_length=32)
-    locale: Annotated[str | None, LocaleStr]
+    locale: Annotated[str | None, LocaleStr] = None
     created_at: datetime
     updated_at: datetime | None = None
 
@@ -28,7 +28,7 @@ class UserModel(BaseModel):
 
 
 class UserLocaleModel(BaseModel):
-    locale: Annotated[str | None, LocaleStr]
+    locale: Annotated[str | None, LocaleStr] = None
 
     @classmethod
     def from_database_model(
@@ -42,8 +42,8 @@ class CreateUserModel(BaseModel):
     telegram_id: int
     first_name: str = Field(min_length=1, max_length=64)
     username: str = Field(min_length=5, max_length=32)
-    locale: Annotated[str | None, LocaleStr]
+    locale: Annotated[str | None, LocaleStr] = None
 
 
 class UpdateUserLocaleModel(BaseModel):
-    locale: Annotated[str | None, LocaleStr]
+    locale: Annotated[str | None, LocaleStr] = None
