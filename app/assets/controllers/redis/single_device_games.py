@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, Tuple, List
 from uuid import UUID
 
 from redis.asyncio import Redis
@@ -52,6 +52,23 @@ class SingleDeviceGamesController(RedisController):
         )
 
         return game
+
+    async def get_games(
+            self,
+            limit: int = 100,
+            offset: int = 0,
+    ) -> Tuple[SingleDeviceGame, ...]:
+        games: List[SingleDeviceGame] = []
+
+        for key in await self.get_keys(pattern="single_device_game", limit=limit, offset=offset):
+            games.append(
+                SingleDeviceGame.from_json(
+                    await self.get(key, exact_key=True),
+                    controller=self
+                )
+            )
+
+        return tuple(games)
 
     async def get_game(
             self,

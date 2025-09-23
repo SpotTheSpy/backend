@@ -37,10 +37,35 @@ class RedisController(ABC):
             self,
             *,
             pattern: str = "",
+            limit: int = 100,
+            offset: int = 0,
+            count: int = 100,
             exact_pattern: bool = False
     ) -> Tuple[str, ...]:
-        keys: List[bytes] = await self._redis.keys(f"*{pattern}*" if exact_pattern else f"*spotthespy:{pattern}*")
-        return tuple([key.decode() for key in keys])
+        cursor: int = 0
+        skipped: int = 0
+        collected: List[str] = []
+
+        while True:
+            cursor, keys = await self._redis.scan(
+                cursor=cursor,
+                match=f"*{pattern}*" if exact_pattern else f"*spotthespy:{pattern}*",
+                count=count
+            )
+
+            for key in keys:
+                if skipped < offset:
+                    skipped += 1
+                    continue
+                if len(collected) < limit:
+                    collected.append(key.decode())
+                if len(collected) >= limit:
+                    return tuple(collected)
+
+            if cursor == 0:
+                break
+
+        return tuple(collected)
 
     async def exists(
             self,

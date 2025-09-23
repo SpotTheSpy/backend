@@ -21,5 +21,5 @@ class Player(BaseObject):
     def to_json(self) -> Dict[str, Any]:
         return {
             "game_id": str(self.game_id),
-            "player_id": str(self.user_id)
+            "user_id": str(self.user_id)
         }
