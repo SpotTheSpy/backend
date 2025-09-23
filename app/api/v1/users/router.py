@@ -7,6 +7,7 @@ from starlette import status
 
 from app.api.v1.exceptions.already_exists import AlreadyExistsError
 from app.api.v1.exceptions.not_found import NotFoundError
+from app.api.v1.security.authenticator import Authenticator
 from app.api.v1.users.models import CreateUserModel, UserModel, UserLocaleModel, UpdateUserLocaleModel
 from app.assets.controllers.redis.locale import LocalesController
 from app.database.models import User
@@ -19,7 +20,8 @@ users_router = APIRouter(prefix="/users", tags=["Users"])
     "",
     status_code=status.HTTP_201_CREATED,
     response_model=UserModel,
-    description="Create a new user"
+    description="Create a new user",
+    dependencies=[Authenticator.verify_api_key()]
 )
 async def create_user(
         user_model: CreateUserModel,
@@ -57,7 +59,8 @@ async def create_user(
     "/{telegram_id}",
     status_code=status.HTTP_200_OK,
     response_model=UserModel,
-    description="Get user by telegram ID"
+    description="Get user by telegram ID",
+    dependencies=[Authenticator.verify_api_key()]
 )
 async def get_user_by_telegram_id(
         telegram_id: int,
@@ -78,7 +81,8 @@ async def get_user_by_telegram_id(
     "/locales/{telegram_id}",
     status_code=status.HTTP_200_OK,
     response_model=UserLocaleModel,
-    description="Get user locale by telegram ID"
+    description="Get user locale by telegram ID",
+    dependencies=[Authenticator.verify_api_key()]
 )
 async def get_user_locale_by_telegram_id(
         telegram_id: int,
@@ -106,7 +110,8 @@ async def get_user_locale_by_telegram_id(
 @users_router.put(
     "/locales/{telegram_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    description="Update user locale by telegram ID"
+    description="Update user locale by telegram ID",
+    dependencies=[Authenticator.verify_api_key()]
 )
 async def update_user_locale_by_telegram_id(
         telegram_id: int,

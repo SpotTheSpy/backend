@@ -8,7 +8,6 @@ class Config(BaseSettings):
     title: ClassVar[str] = "SpotTheSpy"
 
     api_key: SecretStr
-    jwt_key: SecretStr
 
     database_dsn: SecretStr
     test_database_dsn: SecretStr | None = None
