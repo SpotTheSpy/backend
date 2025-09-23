@@ -25,7 +25,7 @@ class SingleDeviceGame(RedisObject):
     game_id: UUID = dataclass_field(default_factory=uuid4)
     spy_index: int | None = None
 
-    def post_init(self) -> None:
+    def __post_init__(self) -> None:
         if self.spy_index is None:
             self.spy_index = randint(0, self.player_amount - 1)
 

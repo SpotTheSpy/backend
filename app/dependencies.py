@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
 from app.assets.controllers.redis.locales import LocalesController
+from app.assets.controllers.redis.single_device_games import SingleDeviceGamesController
 from app.database.database import Database
 from config import Config
 
@@ -28,3 +29,7 @@ async def redis_dependency(request: Request) -> Redis:
 
 async def locales_dependency(request: Request) -> LocalesController:
     return request.app.state.locales
+
+
+async def single_games_dependency(request: Request) -> SingleDeviceGamesController:
+    return request.app.state.single_games

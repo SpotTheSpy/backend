@@ -10,6 +10,7 @@ from starlette.responses import JSONResponse
 from app.api.router import api_router
 from app.api.v1.exceptions.http import HTTPError
 from app.assets.controllers.redis.locales import LocalesController
+from app.assets.controllers.redis.single_device_games import SingleDeviceGamesController
 from app.database.database import Database
 from app.logging import logger
 from config import Config
@@ -31,6 +32,7 @@ app.state.config = config
 app.state.database = database
 app.state.redis = redis
 app.state.locales = LocalesController(redis)
+app.state.single_games = SingleDeviceGamesController(redis)
 
 app.include_router(api_router)
 
