@@ -14,7 +14,7 @@ from app.api.v1.exceptions.unique_violation import UniqueViolationError
 from app.api.v1.models.pagination import PaginationParams, PaginatedResult
 from app.api.v1.security.authenticator import Authenticator
 from app.api.v1.users.filters import users_filters
-from app.api.v1.users.models import CreateUserModel, UserModel, UserLocaleModel, UpdateUserLocaleModel, UpdateUserModel
+from app.api.v1.users.models import CreateUserModel, UserModel, UserLocaleModel, UpdateUserModel
 from app.assets.controllers.redis.locales import LocalesController
 from app.database.models import User
 from app.dependencies import database_session, locales_dependency

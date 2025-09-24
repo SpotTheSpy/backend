@@ -82,13 +82,13 @@ async def get_single_device_game_by_uuid(
 
 
 @single_device_games_router.get(
-    "/by_user_id/{game_id}",
+    "/by_user_id/{user_id}",
     status_code=status.HTTP_200_OK,
     response_model=SingleDeviceGameModel,
     dependencies=[Authenticator.verify_api_key()],
     name="Get single device game by user ID"
 )
-async def get_single_device_game_by_uuid(
+async def get_single_device_game_by_user_id(
         user_id: UUID,
         games_controller: Annotated[SingleDeviceGamesController, Depends(single_games_dependency)]
 ) -> SingleDeviceGameModel:
