@@ -8,6 +8,7 @@ from app.assets.controllers.redis.abstract import RedisController
 from app.assets.controllers.redis.active_players import PlayersController
 from app.assets.objects.player import Player
 from app.assets.objects.single_device_game import SingleDeviceGame
+from app.assets.words.word_manager import WordManager
 
 
 class SingleDeviceGamesController(RedisController):
@@ -35,7 +36,7 @@ class SingleDeviceGamesController(RedisController):
             telegram_id: int,
             player_amount: int
     ) -> SingleDeviceGame:
-        secret_word: str = random.choice(["Apple", "Banana", "Orange"])
+        secret_word: str = WordManager.get_random_word()
 
         game = SingleDeviceGame.new(
             user_id=user_id,
