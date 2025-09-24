@@ -4,9 +4,9 @@ from uuid import UUID
 from redis.asyncio import Redis
 
 from app.assets.controllers.redis.abstract import RedisController
-from app.assets.controllers.redis.active_players import PlayersController
+from app.assets.controllers.redis.single_device_players import SingleDevicePlayersController
 from app.assets.data.secret_words_controller import SecretWordsController
-from app.assets.objects.player import Player
+from app.assets.objects.single_device_player import SingleDevicePlayer
 from app.assets.objects.single_device_game import SingleDeviceGame
 
 
@@ -17,7 +17,7 @@ class SingleDeviceGamesController(RedisController):
     ) -> None:
         super().__init__(redis)
 
-        self._players_controller = PlayersController(redis)
+        self._players_controller = SingleDevicePlayersController(redis)
 
     def key(
             self,
@@ -26,7 +26,7 @@ class SingleDeviceGamesController(RedisController):
         return f"single_device_game:{game_id}"
 
     @property
-    def players_controller(self) -> PlayersController:
+    def players_controller(self) -> SingleDevicePlayersController:
         return self._players_controller
 
     async def create_game(
@@ -46,8 +46,9 @@ class SingleDeviceGamesController(RedisController):
         )
 
         await game.save()
+
         await self.players_controller.create_player(
-            Player(
+            SingleDevicePlayer(
                 user_id=user_id,
                 game_id=game.game_id
             )
@@ -87,7 +88,7 @@ class SingleDeviceGamesController(RedisController):
             self,
             user_id: UUID
     ) -> SingleDeviceGame | None:
-        player: Player | None = await self.players_controller.get_player(user_id)
+        player: SingleDevicePlayer | None = await self.players_controller.get_player(user_id)
 
         if player is None:
             return

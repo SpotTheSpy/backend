@@ -2,32 +2,32 @@ from typing import Dict, Any
 from uuid import UUID
 
 from app.assets.controllers.redis.abstract import RedisController
-from app.assets.objects.player import Player
+from app.assets.objects.single_device_player import SingleDevicePlayer
 
 
-class PlayersController(RedisController):
+class SingleDevicePlayersController(RedisController):
     def key(
             self,
             player_id: UUID
     ) -> str:
-        return f"player:{player_id}"
+        return f"single_device_player:{player_id}"
 
     async def create_player(
             self,
-            player: Player
+            player: SingleDevicePlayer
     ) -> None:
         await self.set(self.key(player.user_id), player.to_json())
 
     async def get_player(
             self,
             user_id: UUID
-    ) -> Player | None:
+    ) -> SingleDevicePlayer | None:
         player_json: Dict[str, Any] = await self.get(self.key(user_id))
 
         if player_json is None:
             return
 
-        return Player.from_json(player_json)
+        return SingleDevicePlayer.from_json(player_json)
 
     async def exists_player(
             self,
