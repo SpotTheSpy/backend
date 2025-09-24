@@ -56,7 +56,7 @@ async def create_user(
     session.add(user)
     await session.commit()
 
-    await locales.create_locale(user.telegram_id, user.locale)
+    await locales.create_locale(user.id, user.locale)
 
     return UserModel.from_database_model(user)
 
@@ -113,7 +113,7 @@ async def get_user_by_uuid(
 
 
 @users_router.get(
-    "/by_telegram_id/{telegram_id}",
+    "/telegram/{telegram_id}",
     status_code=status.HTTP_200_OK,
     response_model=UserModel,
     dependencies=[Authenticator.verify_api_key()],
@@ -165,37 +165,6 @@ async def update_user_by_uuid(
         raise UniqueViolationError("User with specified fields already exists")
 
 
-@users_router.put(
-    "/by_telegram_id/{telegram_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Authenticator.verify_api_key()],
-    name="Update user by telegram ID"
-)
-async def update_user_by_telegram_id(
-        telegram_id: int,
-        user_model: UpdateUserModel,
-        session: Annotated[AsyncSession, Depends(database_session)]
-) -> None:
-    user: User = await session.scalar(
-        select(User)
-        .filter_by(telegram_id=telegram_id)
-    )
-
-    if user is None:
-        raise NotFoundError("User with provided UUID was not found")
-
-    await session.execute(
-        update(User)
-        .filter_by(id=user.id)
-        .values(**user_model.model_dump(exclude_unset=True))
-    )
-
-    try:
-        await session.commit()
-    except IntegrityError:
-        raise UniqueViolationError("User with specified fields already exists")
-
-
 @users_router.delete(
     "/{user_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -221,86 +190,31 @@ async def delete_user_by_uuid(
     await session.commit()
 
 
-@users_router.delete(
-    "/by_telegram_id/{telegram_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Authenticator.verify_api_key()],
-    name="Delete user by telegram ID"
-)
-async def delete_user_by_telegram_id(
-        telegram_id: int,
-        session: Annotated[AsyncSession, Depends(database_session)]
-) -> None:
-    user: User = await session.scalar(
-        select(User)
-        .filter_by(telegram_id=telegram_id)
-    )
-
-    if user is None:
-        raise NotFoundError("User with provided UUID was not found")
-
-    await session.execute(
-        delete(User)
-        .filter_by(id=user.id)
-    )
-    await session.commit()
-
-
 @users_router.get(
-    "/locales/{telegram_id}",
+    "/locales/{user_id}",
     status_code=status.HTTP_200_OK,
     response_model=UserLocaleModel,
     dependencies=[Authenticator.verify_api_key()],
-    name="Get user locale by telegram ID"
+    name="Get user locale by UUID"
 )
-async def get_user_locale_by_telegram_id(
-        telegram_id: int,
+async def get_user_locale_by_uuid(
+        user_id: UUID,
         session: Annotated[AsyncSession, Depends(database_session)],
         locales: Annotated[LocalesController, Depends(locales_dependency)]
 ) -> UserLocaleModel:
-    locale: str = await locales.get_locale(telegram_id)
+    locale: str = await locales.get_locale(user_id)
 
     if locale is not None:
         return UserLocaleModel(locale=locale)
 
     user: User = await session.scalar(
         select(User)
-        .filter_by(telegram_id=telegram_id)
+        .filter_by(id=user_id)
     )
 
     if user is None:
-        raise NotFoundError("User with provided telegram ID was not found")
+        raise NotFoundError("User with provided UUID was not found")
 
-    await locales.create_locale(user.telegram_id, user.locale)
+    await locales.create_locale(user.id, user.locale)
 
     return UserLocaleModel.from_database_model(user)
-
-
-@users_router.put(
-    "/locales/{telegram_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Authenticator.verify_api_key()],
-    name="Update user locale by telegram ID"
-)
-async def update_user_locale_by_telegram_id(
-        telegram_id: int,
-        locale_model: UpdateUserLocaleModel,
-        session: Annotated[AsyncSession, Depends(database_session)],
-        locales: Annotated[LocalesController, Depends(locales_dependency)]
-) -> None:
-    user: User = await session.scalar(
-        select(User)
-        .filter_by(telegram_id=telegram_id)
-    )
-
-    if user is None:
-        raise NotFoundError("User with provided telegram ID was not found")
-
-    await session.execute(
-        update(User)
-        .filter_by(id=user.id)
-        .values(locale=locale_model.locale)
-    )
-    await session.commit()
-
-    await locales.create_locale(user.telegram_id, locale_model.locale)

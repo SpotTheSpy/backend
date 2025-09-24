@@ -1,35 +1,36 @@
+from uuid import UUID
+
 from app.assets.controllers.redis.abstract import RedisController
-from app.assets.filters.string import LocaleStr
 
 
 class LocalesController(RedisController):
     def key(
             self,
-            telegram_id: int
+            user_id: UUID
     ) -> str:
-        return f"locale:{telegram_id}"
+        return f"locale:{user_id}"
 
     async def create_locale(
             self,
-            telegram_id: int,
+            user_id: UUID,
             locale: str
     ) -> None:
-        await self.set(self.key(telegram_id), locale)
+        await self.set(self.key(user_id), locale)
 
     async def get_locale(
             self,
-            telegram_id: int
+            user_id: UUID
     ) -> str | None:
-        return await self.get(self.key(telegram_id))
+        return await self.get(self.key(user_id))
 
     async def exists_locale(
             self,
-            telegram_id: int
+            user_id: UUID
     ) -> bool:
-        return await self.exists(self.key(telegram_id))
+        return await self.exists(self.key(user_id))
 
     async def remove_locale(
             self,
-            telegram_id: int
+            user_id: UUID
     ) -> None:
-        await self.remove(self.key(telegram_id))
+        await self.remove(self.key(user_id))
