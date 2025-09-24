@@ -11,7 +11,7 @@ from app.api.v1.security.authenticator import Authenticator
 from app.api.v1.single_device_games.models import SingleDeviceGameModel, CreateSingleDeviceGameModel
 from app.assets.controllers.redis.single_device_games import SingleDeviceGamesController
 from app.assets.objects.single_device_game import SingleDeviceGame
-from app.dependencies import single_games_dependency
+from app.dependencies import single_device_games_dependency
 
 single_device_games_router = APIRouter(prefix="/single_device_games", tags=["Single_device_games"])
 
@@ -25,7 +25,7 @@ single_device_games_router = APIRouter(prefix="/single_device_games", tags=["Sin
 )
 async def create_single_device_game(
         game_model: CreateSingleDeviceGameModel,
-        games_controller: Annotated[SingleDeviceGamesController, Depends(single_games_dependency)]
+        games_controller: Annotated[SingleDeviceGamesController, Depends(single_device_games_dependency)]
 ) -> SingleDeviceGameModel:
     if await games_controller.players_controller.exists_player(game_model.user_id):
         raise AlreadyInGameError("You are already in game")
@@ -48,7 +48,7 @@ async def create_single_device_game(
 )
 async def get_single_device_games(
         pagination: Annotated[PaginationParams, Depends()],
-        games_controller: Annotated[SingleDeviceGamesController, Depends(single_games_dependency)]
+        games_controller: Annotated[SingleDeviceGamesController, Depends(single_device_games_dependency)]
 ) -> PaginatedResult[SingleDeviceGameModel]:
     games: Tuple[SingleDeviceGame, ...] = await games_controller.get_games(
         pagination.limit,
@@ -70,7 +70,7 @@ async def get_single_device_games(
 )
 async def get_single_device_game_by_uuid(
         game_id: UUID,
-        games_controller: Annotated[SingleDeviceGamesController, Depends(single_games_dependency)]
+        games_controller: Annotated[SingleDeviceGamesController, Depends(single_device_games_dependency)]
 ) -> SingleDeviceGameModel:
     game: SingleDeviceGame = await games_controller.get_game(game_id)
 
@@ -89,7 +89,7 @@ async def get_single_device_game_by_uuid(
 )
 async def get_single_device_game_by_user_id(
         user_id: UUID,
-        games_controller: Annotated[SingleDeviceGamesController, Depends(single_games_dependency)]
+        games_controller: Annotated[SingleDeviceGamesController, Depends(single_device_games_dependency)]
 ) -> SingleDeviceGameModel:
     game: SingleDeviceGame = await games_controller.get_game_by_player(user_id)
 
@@ -107,7 +107,7 @@ async def get_single_device_game_by_user_id(
 )
 async def delete_single_device_game_by_uuid(
         game_id: UUID,
-        games_controller: Annotated[SingleDeviceGamesController, Depends(single_games_dependency)]
+        games_controller: Annotated[SingleDeviceGamesController, Depends(single_device_games_dependency)]
 ) -> None:
     if not await games_controller.exists_game(game_id):
         raise NotFoundError("Game with provided UUID was not found")

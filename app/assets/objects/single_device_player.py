@@ -7,7 +7,7 @@ from app.assets.objects.base import BaseObject
 
 
 @dataclass
-class Player(BaseObject):
+class SingleDevicePlayer(BaseObject):
     game_id: UUID
     user_id: UUID
 

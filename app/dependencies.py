@@ -31,5 +31,5 @@ async def locales_dependency(request: Request) -> LocalesController:
     return request.app.state.locales
 
 
-async def single_games_dependency(request: Request) -> SingleDeviceGamesController:
+async def single_device_games_dependency(request: Request) -> SingleDeviceGamesController:
     return request.app.state.single_games
