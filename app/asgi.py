@@ -32,7 +32,7 @@ app.state.config = config
 app.state.database = database
 app.state.redis = redis
 app.state.locales = LocalesController(redis)
-app.state.single_games = SingleDeviceGamesController(redis)
+app.state.single_device_games = SingleDeviceGamesController(redis)
 
 app.include_router(api_router)
 
