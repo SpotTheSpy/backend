@@ -31,5 +31,4 @@ class SingleDeviceGameModel(BaseModel):
 class CreateSingleDeviceGameModel(BaseModel):
     user_id: UUID
     telegram_id: int
-    secret_word: str = Field(min_length=2, max_length=32)
     player_amount: int = Field(ge=3, le=8)

@@ -33,8 +33,7 @@ async def create_single_device_game(
     game: SingleDeviceGame = await games_controller.create_game(
         game_model.user_id,
         game_model.telegram_id,
-        game_model.player_amount,
-        game_model.secret_word
+        game_model.player_amount
     )
 
     return SingleDeviceGameModel.from_game(game)

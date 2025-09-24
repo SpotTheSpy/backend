@@ -1,3 +1,4 @@
+import random
 from typing import Dict, Any, Tuple, List
 from uuid import UUID
 
@@ -32,9 +33,10 @@ class SingleDeviceGamesController(RedisController):
             self,
             user_id: UUID,
             telegram_id: int,
-            player_amount: int,
-            secret_word: str
+            player_amount: int
     ) -> SingleDeviceGame:
+        secret_word: str = random.choice(["Apple", "Banana", "Orange"])
+
         game = SingleDeviceGame.new(
             user_id=user_id,
             telegram_id=telegram_id,
