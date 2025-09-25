@@ -7,6 +7,8 @@ from app.assets.objects.multi_device_player import MultiDevicePlayer
 
 if TYPE_CHECKING:
     from app.assets.objects.multi_device_game import MultiDeviceGame
+else:
+    MultiDeviceGame = Any
 
 
 class MultiDevicePlayers(Context):

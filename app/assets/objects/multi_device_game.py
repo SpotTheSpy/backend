@@ -1,5 +1,5 @@
 from dataclasses import field as dataclass_field
-from typing import Dict, Any, TYPE_CHECKING, Optional
+from typing import Dict, Any, TYPE_CHECKING, Optional, List
 from uuid import UUID, uuid4
 
 from pydantic.dataclasses import dataclass
@@ -57,11 +57,17 @@ class MultiDeviceGame(RedisObject):
         except (ValueError, KeyError):
             return
 
-        return cls(
+        players: List[Dict[str, Any]] = data.pop("players")
+
+        game = cls(
             host_id=host_id,
             **data,
             _controller=controller
         )
+
+        game.players.init(players, game=game)
+
+        return game
 
     def to_json(self) -> Dict[str, Any]:
         return {

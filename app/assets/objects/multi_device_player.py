@@ -51,7 +51,7 @@ class MultiDevicePlayer(BaseObject):
 
     def to_json(self) -> Dict[str, Any]:
         return {
-            "user_id": self.user_id,
+            "user_id": str(self.user_id),
             "first_name": self.first_name
         }
 

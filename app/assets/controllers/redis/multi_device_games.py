@@ -71,12 +71,15 @@ class MultiDeviceGamesController(RedisController):
         games: List[MultiDeviceGame] = []
 
         for key in await self.get_keys(pattern="multi_device_game", limit=limit, offset=offset):
-            games.append(
-                MultiDeviceGame.from_json(
-                    await self.get(key, exact_key=True),
-                    controller=self
-                )
+            game = MultiDeviceGame.from_json(
+                await self.get(key, exact_key=True),
+                controller=self
             )
+
+            if game is None:
+                continue
+
+            games.append(game)
 
         return tuple(games)
 
