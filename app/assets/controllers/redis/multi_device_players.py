@@ -2,7 +2,7 @@ from typing import Dict, Any
 from uuid import UUID
 
 from app.assets.controllers.redis.abstract import RedisController
-from app.assets.objects.multi_device_player import MultiDevicePlayer
+from app.assets.objects.multi_device_active_player import MultiDeviceActivePlayer
 
 
 class MultiDevicePlayersController(RedisController):
@@ -14,20 +14,20 @@ class MultiDevicePlayersController(RedisController):
 
     async def create_player(
             self,
-            player: MultiDevicePlayer
+            player: MultiDeviceActivePlayer
     ) -> None:
         await self.set(self.key(player.user_id), player.to_json())
 
     async def get_player(
             self,
             user_id: UUID
-    ) -> MultiDevicePlayer | None:
+    ) -> MultiDeviceActivePlayer | None:
         player_json: Dict[str, Any] = await self.get(self.key(user_id))
 
         if player_json is None:
             return
 
-        return MultiDevicePlayer.from_json(player_json)
+        return MultiDeviceActivePlayer.from_json(player_json)
 
     async def exists_player(
             self,

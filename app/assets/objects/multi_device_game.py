@@ -5,6 +5,7 @@ from uuid import UUID, uuid4
 
 from pydantic.dataclasses import dataclass
 
+from app.assets.controllers.context.multi_device_players import MultiDevicePlayers
 from app.assets.objects.redis import RedisObject
 
 if TYPE_CHECKING:
@@ -15,33 +16,31 @@ else:
 
 @dataclass
 class MultiDeviceGame(RedisObject):
-    user_id: UUID
-    telegram_id: int
+    host_id: UUID
     player_amount: int
     secret_word: str
 
     _controller: 'MultiDeviceGamesController'
 
     game_id: UUID = dataclass_field(default_factory=uuid4)
-    spy_index: int | None = None
+    has_started: bool = False
+
+    players: MultiDevicePlayers = dataclass_field(default_factory=MultiDevicePlayers)
 
     def __post_init__(self) -> None:
-        if self.spy_index is None:
-            self.spy_index = randint(0, self.player_amount - 1)
+        self.players.init(None, game=self)
 
     @classmethod
     def new(
             cls,
-            user_id: UUID,
-            telegram_id: int,
+            host_id: UUID,
             player_amount: int,
             secret_word: str,
             *,
             controller: 'MultiDeviceGamesController',
     ) -> 'MultiDeviceGame':
         return cls(
-            user_id=user_id,
-            telegram_id=telegram_id,
+            host_id=host_id,
             player_amount=player_amount,
             secret_word=secret_word,
             _controller=controller
@@ -75,3 +74,6 @@ class MultiDeviceGame(RedisObject):
     @property
     def controller(self) -> 'MultiDeviceGamesController':
         return self._controller
+
+    async def start(self) -> None:
+        self.has_started = True

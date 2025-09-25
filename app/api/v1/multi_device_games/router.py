@@ -27,12 +27,12 @@ async def create_multi_device_game(
         game_model: CreateMultiDeviceGameModel,
         games_controller: Annotated[MultiDeviceGamesController, Depends(multi_device_games_dependency)]
 ) -> MultiDeviceGameModel:
-    if await games_controller.players_controller.exists_player(game_model.user_id):
+    if await games_controller.players_controller.exists_player(game_model.host_id):
         raise AlreadyInGameError("You are already in game")
 
     game: MultiDeviceGame = await games_controller.create_game(
-        game_model.user_id,
-        game_model.telegram_id,
+        game_model.host_id,
+        game_model.first_name,
         game_model.player_amount
     )
 

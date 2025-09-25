@@ -6,8 +6,9 @@ from redis.asyncio import Redis
 from app.assets.controllers.redis.abstract import RedisController
 from app.assets.controllers.redis.multi_device_players import MultiDevicePlayersController
 from app.assets.data.secret_words_controller import SecretWordsController
-from app.assets.objects.multi_device_player import MultiDevicePlayer
+from app.assets.objects.multi_device_active_player import MultiDeviceActivePlayer
 from app.assets.objects.multi_device_game import MultiDeviceGame
+from app.assets.objects.multi_device_player import MultiDevicePlayer
 
 
 class MultiDeviceGamesController(RedisController):
@@ -31,25 +32,31 @@ class MultiDeviceGamesController(RedisController):
 
     async def create_game(
             self,
-            user_id: UUID,
-            telegram_id: int,
+            host_id: UUID,
+            first_name: str,
             player_amount: int
     ) -> MultiDeviceGame:
         secret_word: str = SecretWordsController.get_random_secret_word()
 
         game = MultiDeviceGame.new(
-            user_id=user_id,
-            telegram_id=telegram_id,
+            host_id=host_id,
             player_amount=player_amount,
             secret_word=secret_word,
             controller=self
+        )
+        game.players.add(
+            MultiDevicePlayer.new(
+                user_id=host_id,
+                first_name=first_name,
+                game=game
+            )
         )
 
         await game.save()
 
         await self.players_controller.create_player(
-            MultiDevicePlayer(
-                user_id=user_id,
+            MultiDeviceActivePlayer(
+                user_id=host_id,
                 game_id=game.game_id
             )
         )
@@ -88,7 +95,7 @@ class MultiDeviceGamesController(RedisController):
             self,
             user_id: UUID
     ) -> MultiDeviceGame | None:
-        player: MultiDevicePlayer | None = await self.players_controller.get_player(user_id)
+        player: MultiDeviceActivePlayer | None = await self.players_controller.get_player(user_id)
 
         if player is None:
             return
@@ -107,6 +114,7 @@ class MultiDeviceGamesController(RedisController):
     ) -> None:
         game: MultiDeviceGame = await self.get_game(game_id)
 
-        await self.players_controller.remove_player(game.user_id)
+        for user_id in game.players.ids:
+            await self.players_controller.remove_player(user_id)
 
         await game.clear()

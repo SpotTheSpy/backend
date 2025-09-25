@@ -29,6 +29,6 @@ class MultiDeviceGameModel(BaseModel):
 
 
 class CreateMultiDeviceGameModel(BaseModel):
-    user_id: UUID
-    telegram_id: int
+    host_id: UUID
+    first_name: str = Field(min_length=2, max_length=32)
     player_amount: int = Field(ge=3, le=8)
