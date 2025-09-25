@@ -158,6 +158,8 @@ async def join_game_by_uuid(
         raise GameHasAlreadyStartedError("Game has already started")
     if game.players.exists(user_id):
         raise AlreadyInGameError("You are already in game")
+    if game.player_amount >= Parameters.MAX_PLAYER_AMOUNT:
+        raise InvalidPlayerAmountError("Game has too many players")
 
     user: User = await session.scalar(
         select(User)
