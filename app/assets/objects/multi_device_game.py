@@ -1,10 +1,12 @@
 from dataclasses import field as dataclass_field
+from random import randint
 from typing import Dict, Any, TYPE_CHECKING, Optional, List
 from uuid import UUID, uuid4
 
 from pydantic.dataclasses import dataclass
 
 from app.assets.controllers.context.multi_device_players import MultiDevicePlayers
+from app.assets.enums.player_role import PlayerRole
 from app.assets.objects.redis import RedisObject
 
 if TYPE_CHECKING:
@@ -91,3 +93,12 @@ class MultiDeviceGame(RedisObject):
 
     async def start(self) -> None:
         self.has_started = True
+        self.player_amount = self.players.size
+
+        spy_index: int = randint(0, self.player_amount - 1)
+
+        for index, player in enumerate(self.players.list):
+            if index == spy_index:
+                player.role = PlayerRole.SPY
+            else:
+                player.role = PlayerRole.CITIZEN
