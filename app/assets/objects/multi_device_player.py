@@ -3,6 +3,7 @@ from uuid import UUID
 
 from pydantic.dataclasses import dataclass
 
+from app.assets.enums.player_role import PlayerRole
 from app.assets.objects.base import BaseObject
 
 if TYPE_CHECKING:
@@ -16,6 +17,8 @@ class MultiDevicePlayer(BaseObject):
     user_id: UUID
     first_name: str
     _game: 'MultiDeviceGame'
+
+    role: PlayerRole | None = None
 
     @classmethod
     def new(
@@ -40,11 +43,16 @@ class MultiDevicePlayer(BaseObject):
     ) -> Optional['MultiDevicePlayer']:
         try:
             user_id: UUID = UUID(data.pop("user_id"))
+            role: str | None = data.pop("role")
+
+            if role is not None:
+                role = PlayerRole(role)
         except (ValueError, KeyError):
             return
 
         return cls(
             user_id=user_id,
+            role=role,
             **data,
             _game=game
         )
@@ -52,7 +60,8 @@ class MultiDevicePlayer(BaseObject):
     def to_json(self) -> Dict[str, Any]:
         return {
             "user_id": str(self.user_id),
-            "first_name": self.first_name
+            "first_name": self.first_name,
+            "role": self.role
         }
 
     @property
