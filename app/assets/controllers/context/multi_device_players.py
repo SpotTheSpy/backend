@@ -27,12 +27,14 @@ class MultiDevicePlayers(Context):
             return
 
         for player_json in players:
-            try:
-                player_json["player_id"] = UUID(player_json.get("player_id"))
-            except ValueError:
-                pass
+            player: MultiDevicePlayer | None = MultiDevicePlayer.from_json(
+                player_json,
+                game=game
+            )
 
-            player = MultiDevicePlayer.from_json(player_json)
+            if player is None:
+                continue
+
             self.add(player)
 
     def to_json(self) -> List[Dict[str, Any]]:

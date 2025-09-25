@@ -1,6 +1,5 @@
 from dataclasses import field as dataclass_field
-from random import randint
-from typing import Dict, Any, TYPE_CHECKING
+from typing import Dict, Any, TYPE_CHECKING, Optional
 from uuid import UUID, uuid4
 
 from pydantic.dataclasses import dataclass
@@ -52,17 +51,26 @@ class MultiDeviceGame(RedisObject):
             data: Dict[str, Any],
             *,
             controller: 'MultiDeviceGamesController'
-    ) -> 'MultiDeviceGame':
-        return cls(**data, _controller=controller)
+    ) -> Optional['MultiDeviceGame']:
+        try:
+            host_id: UUID = UUID(data.pop("host_id"))
+        except (ValueError, KeyError):
+            return
+
+        return cls(
+            host_id=host_id,
+            **data,
+            _controller=controller
+        )
 
     def to_json(self) -> Dict[str, Any]:
         return {
             "game_id": str(self.game_id),
-            "user_id": str(self.user_id),
-            "telegram_id": self.telegram_id,
+            "host_id": str(self.host_id),
+            "has_started": self.has_started,
             "player_amount": self.player_amount,
             "secret_word": self.secret_word,
-            "spy_index": self.spy_index
+            "players": self.players.to_json()
         }
 
     async def save(self) -> None:

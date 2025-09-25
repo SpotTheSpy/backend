@@ -1,4 +1,4 @@
-from typing import Any, Dict, TYPE_CHECKING
+from typing import Any, Dict, TYPE_CHECKING, Optional
 from uuid import UUID
 
 from pydantic.dataclasses import dataclass
@@ -37,16 +37,22 @@ class MultiDevicePlayer(BaseObject):
             data: Dict[str, Any],
             *,
             game: 'MultiDeviceGame'
-    ) -> Any:
+    ) -> Optional['MultiDevicePlayer']:
+        try:
+            user_id: UUID = UUID(data.pop("user_id"))
+        except (ValueError, KeyError):
+            return
+
         return cls(
+            user_id=user_id,
             **data,
             _game=game
         )
 
     def to_json(self) -> Dict[str, Any]:
         return {
-            "game_id": str(self.game_id),
-            "user_id": str(self.user_id)
+            "user_id": self.user_id,
+            "first_name": self.first_name
         }
 
     @property
