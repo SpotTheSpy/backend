@@ -21,7 +21,7 @@ class MultiDevicePlayerModel(BaseModel):
     ) -> 'MultiDevicePlayerModel':
         return cls(
             user_id=player.user_id,
-            telegram_id=player,
+            telegram_id=player.telegram_id,
             first_name=player.first_name,
             role=player.role
         )
