@@ -14,7 +14,7 @@ from app.api.v1.exceptions.unique_violation import UniqueViolationError
 from app.api.v1.models.pagination import PaginationParams, PaginatedResult
 from app.api.v1.security.authenticator import Authenticator
 from app.api.v1.users.filters import users_filters
-from app.api.v1.users.models import CreateUserModel, UserModel, UserLocaleModel, UpdateUserModel
+from app.api.v1.users.models import CreateUserModel, UserModel, UserLocaleModel, UpdateUserModel, UpdateUserLocaleModel
 from app.assets.controllers.redis.locales import LocalesController
 from app.database.models import User
 from app.dependencies import database_session, locales_dependency
@@ -218,3 +218,33 @@ async def get_user_locale_by_uuid(
     await locales.create_locale(user.id, user.locale)
 
     return UserLocaleModel.from_database_model(user)
+
+
+@users_router.put(
+    "/locales/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Authenticator.verify_api_key()],
+    name="Update user locale by UUID"
+)
+async def update_user_locale_by_telegram_id(
+        user_id: UUID,
+        locale_model: UpdateUserLocaleModel,
+        session: Annotated[AsyncSession, Depends(database_session)],
+        locales: Annotated[LocalesController, Depends(locales_dependency)]
+) -> None:
+    user: User = await session.scalar(
+        select(User)
+        .filter_by(id=user_id)
+    )
+
+    if user is None:
+        raise NotFoundError("User with provided UUID was not found")
+
+    await session.execute(
+        update(User)
+        .filter_by(id=user.id)
+        .values(locale=locale_model.locale)
+    )
+    await session.commit()
+
+    await locales.create_locale(user.id, locale_model.locale)
