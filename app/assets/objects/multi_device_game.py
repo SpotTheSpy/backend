@@ -91,7 +91,7 @@ class MultiDeviceGame(RedisObject):
     def controller(self) -> 'MultiDeviceGamesController':
         return self._controller
 
-    async def start(self) -> None:
+    def start(self) -> None:
         self.has_started = True
         self.player_amount = self.players.size
 

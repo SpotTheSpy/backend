@@ -3,6 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from app.assets.enums.player_role import PlayerRole
 from app.assets.objects.multi_device_game import MultiDeviceGame
 from app.assets.objects.multi_device_player import MultiDevicePlayer
 
@@ -10,6 +11,7 @@ from app.assets.objects.multi_device_player import MultiDevicePlayer
 class MultiDevicePlayerModel(BaseModel):
     user_id: UUID
     first_name: str = Field(min_length=2, max_length=32)
+    role: PlayerRole | None = None
 
     @classmethod
     def from_player(
@@ -18,8 +20,14 @@ class MultiDevicePlayerModel(BaseModel):
     ) -> 'MultiDevicePlayerModel':
         return cls(
             user_id=player.user_id,
-            first_name=player.first_name
+            first_name=player.first_name,
+            role=player.role
         )
+
+
+class CreateMultiDevicePlayerModel(BaseModel):
+    user_id: UUID
+    first_name: str = Field(min_length=2, max_length=32)
 
 
 class MultiDeviceGameModel(BaseModel):
@@ -47,5 +55,4 @@ class MultiDeviceGameModel(BaseModel):
 
 class CreateMultiDeviceGameModel(BaseModel):
     host_id: UUID
-    first_name: str = Field(min_length=2, max_length=32)
     player_amount: int = Field(ge=3, le=8)

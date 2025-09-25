@@ -83,8 +83,3 @@ class MultiDevicePlayers(Context):
     ) -> None:
         if self.exists(uuid):
             self._players.pop(uuid)
-
-    def shuffle(self) -> None:
-        players_items: List[Tuple[UUID, MultiDevicePlayer]] = list(self._players.items())
-        shuffle(players_items)
-        self._players = dict(players_items)
