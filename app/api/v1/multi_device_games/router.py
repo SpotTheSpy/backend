@@ -53,6 +53,7 @@ async def create_multi_device_game(
 
     game: MultiDeviceGame = await games_controller.create_game(
         user.id,
+        user.telegram_id,
         user.first_name,
         game_model.player_amount
     )
@@ -169,6 +170,7 @@ async def join_game_by_uuid(
     game.players.add(
         MultiDevicePlayer.new(
             user_id=user.id,
+            telegram_id=user.telegram_id,
             first_name=user.first_name,
             game=game
         )

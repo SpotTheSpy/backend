@@ -10,6 +10,7 @@ from app.assets.objects.multi_device_player import MultiDevicePlayer
 
 class MultiDevicePlayerModel(BaseModel):
     user_id: UUID
+    telegram_id: int
     first_name: str = Field(min_length=2, max_length=32)
     role: PlayerRole | None = None
 
@@ -20,14 +21,10 @@ class MultiDevicePlayerModel(BaseModel):
     ) -> 'MultiDevicePlayerModel':
         return cls(
             user_id=player.user_id,
+            telegram_id=player,
             first_name=player.first_name,
             role=player.role
         )
-
-
-class CreateMultiDevicePlayerModel(BaseModel):
-    user_id: UUID
-    first_name: str = Field(min_length=2, max_length=32)
 
 
 class MultiDeviceGameModel(BaseModel):

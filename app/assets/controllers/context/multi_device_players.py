@@ -1,5 +1,4 @@
-from random import shuffle
-from typing import Any, Dict, Optional, TYPE_CHECKING, List, Tuple
+from typing import Any, Dict, Optional, TYPE_CHECKING, List
 from uuid import UUID
 
 from app.assets.controllers.context.abstract import Context

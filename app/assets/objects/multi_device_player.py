@@ -15,6 +15,7 @@ else:
 @dataclass
 class MultiDevicePlayer(BaseObject):
     user_id: UUID
+    telegram_id: int
     first_name: str
     _game: 'MultiDeviceGame'
 
@@ -24,12 +25,14 @@ class MultiDevicePlayer(BaseObject):
     def new(
             cls,
             user_id: UUID,
+            telegram_id: int,
             first_name: str,
             *,
             game: 'MultiDeviceGame'
     ) -> 'MultiDevicePlayer':
         return cls(
             user_id=user_id,
+            telegram_id=telegram_id,
             first_name=first_name,
             _game=game
         )
@@ -60,6 +63,7 @@ class MultiDevicePlayer(BaseObject):
     def to_json(self) -> Dict[str, Any]:
         return {
             "user_id": str(self.user_id),
+            "telegram_id": self.telegram_id,
             "first_name": self.first_name,
             "role": self.role
         }

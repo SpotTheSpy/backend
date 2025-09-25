@@ -33,6 +33,7 @@ class MultiDeviceGamesController(RedisController):
     async def create_game(
             self,
             host_id: UUID,
+            telegram_id: int,
             first_name: str,
             player_amount: int
     ) -> MultiDeviceGame:
@@ -47,6 +48,7 @@ class MultiDeviceGamesController(RedisController):
         game.players.add(
             MultiDevicePlayer.new(
                 user_id=host_id,
+                telegram_id=telegram_id,
                 first_name=first_name,
                 game=game
             )
