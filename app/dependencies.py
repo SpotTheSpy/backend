@@ -6,6 +6,7 @@ from starlette.requests import Request
 
 from app.assets.controllers.redis.locales import LocalesController
 from app.assets.controllers.redis.single_device_games import SingleDeviceGamesController
+from app.assets.objects.multi_device_game import MultiDeviceGamesController
 from app.database.database import Database
 from config import Config
 
@@ -33,3 +34,7 @@ async def locales_dependency(request: Request) -> LocalesController:
 
 async def single_device_games_dependency(request: Request) -> SingleDeviceGamesController:
     return request.app.state.single_device_games
+
+
+async def multi_device_games_dependency(request: Request) -> MultiDeviceGamesController:
+    return request.app.state.multi_device_games
