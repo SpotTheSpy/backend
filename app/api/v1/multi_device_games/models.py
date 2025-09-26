@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from app.assets.enums.player_role import PlayerRole
 from app.assets.objects.multi_device_game import MultiDeviceGame
 from app.assets.objects.multi_device_player import MultiDevicePlayer
+from app.assets.parameters import Parameters
 
 
 class MultiDevicePlayerModel(BaseModel):
@@ -31,7 +32,7 @@ class MultiDeviceGameModel(BaseModel):
     game_id: UUID
     host_id: UUID
     has_started: bool
-    player_amount: int = Field(ge=3, le=8)
+    player_amount: int = Field(ge=Parameters.MIN_PLAYER_AMOUNT, le=Parameters.MAX_PLAYER_AMOUNT)
     secret_word: str = Field(min_length=2, max_length=32)
     players: List[MultiDevicePlayerModel]
 
@@ -52,4 +53,4 @@ class MultiDeviceGameModel(BaseModel):
 
 class CreateMultiDeviceGameModel(BaseModel):
     host_id: UUID
-    player_amount: int = Field(ge=3, le=8)
+    player_amount: int = Field(ge=Parameters.MIN_PLAYER_AMOUNT, le=Parameters.MAX_PLAYER_AMOUNT)
