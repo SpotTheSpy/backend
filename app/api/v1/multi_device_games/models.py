@@ -12,7 +12,7 @@ from app.assets.parameters import Parameters
 class MultiDevicePlayerModel(BaseModel):
     user_id: UUID
     telegram_id: int
-    first_name: str = Field(min_length=2, max_length=32)
+    first_name: str = Field(max_length=32)
     role: PlayerRole | None = None
 
     @classmethod
