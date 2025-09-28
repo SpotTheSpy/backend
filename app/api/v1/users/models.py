@@ -14,7 +14,7 @@ class UserModel(BaseModel):
     id: UUID
     telegram_id: int
     first_name: str = Field(max_length=64)
-    username: str = Field(min_length=5, max_length=32)
+    username: str | None = Field(min_length=5, max_length=32, default=None)
     locale: Annotated[str | None, LocaleStr] = None
     created_at: datetime
     updated_at: datetime | None = None
@@ -30,7 +30,7 @@ class UserModel(BaseModel):
 class CreateUserModel(BaseModel):
     telegram_id: int
     first_name: str = Field(max_length=64)
-    username: str = Field(min_length=5, max_length=32)
+    username: str | None = Field(min_length=5, max_length=32, default=None)
     locale: Annotated[str | None, LocaleStr] = None
 
 

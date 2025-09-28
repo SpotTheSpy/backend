@@ -34,17 +34,17 @@ async def create_user(
         session: Annotated[AsyncSession, Depends(database_session)],
         locales: Annotated[LocalesController, Depends(locales_dependency)]
 ) -> UserModel:
-    if await session.scalar(
-        select(User)
-        .filter(
+    if user_model.username is None:
+        select_query: Select = select(User).filter_by(telegram_id=user_model.telegram_id)
+    else:
+        select_query: Select = select(User).filter(
             or_(
                 User.telegram_id == user_model.telegram_id,
                 User.username == user_model.username
             )
         )
-        .exists()
-        .select()
-    ):
+
+    if await session.scalar(select_query.exists().select()):
         raise AlreadyExistsError("User with provided credentials already exists")
 
     user = User(

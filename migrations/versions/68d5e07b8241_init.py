@@ -25,7 +25,7 @@ def upgrade() -> None:
     sa.Column('id', sa.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('telegram_id', sa.BigInteger(), nullable=False),
     sa.Column('first_name', sa.String(length=64), nullable=False),
-    sa.Column('username', sa.String(length=32), nullable=False),
+    sa.Column('username', sa.String(length=32), nullable=True),
     sa.Column('locale', sa.String(length=8), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
