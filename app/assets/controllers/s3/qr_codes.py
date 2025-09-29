@@ -15,8 +15,8 @@ class QRCodeGenerator:
             self,
             fill_color: str,
             back_color: str,
-            pixel_size: int = 28,
-            radius: int = 12,
+            pixel_size: int = 14,
+            radius: int = 6,
             border: int = 16,
             error: str = "Q"
     ) -> None:
