@@ -6,6 +6,7 @@ from starlette.requests import Request
 
 from app.assets.controllers.redis.locales import LocalesController
 from app.assets.controllers.redis.single_device_games import SingleDeviceGamesController
+from app.assets.controllers.s3.qr_codes import QRCodesController
 from app.assets.objects.multi_device_game import MultiDeviceGamesController
 from app.database.database import Database
 from config import Config
@@ -38,3 +39,7 @@ async def single_device_games_dependency(request: Request) -> SingleDeviceGamesC
 
 async def multi_device_games_dependency(request: Request) -> MultiDeviceGamesController:
     return request.app.state.multi_device_games
+
+
+async def qr_codes_dependency(request: Request) -> QRCodesController:
+    return request.app.state.qr_codes

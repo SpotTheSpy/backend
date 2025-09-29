@@ -12,6 +12,8 @@ from app.api.v1.exceptions.http import HTTPError
 from app.assets.controllers.redis.locales import LocalesController
 from app.assets.controllers.redis.multi_device_games import MultiDeviceGamesController
 from app.assets.controllers.redis.single_device_games import SingleDeviceGamesController
+from app.assets.controllers.s3.abstract import S3Config
+from app.assets.controllers.s3.qr_codes import QRCodesController
 from app.database.database import Database
 from app.logging import logger
 from config import Config
@@ -26,6 +28,12 @@ async def lifespan(fastapi_app: FastAPI):
 config = Config(_env_file=".env")
 database = Database.from_dsn(config.database_dsn.get_secret_value())
 redis = Redis.from_url(config.redis_dsn.get_secret_value())
+s3_config = S3Config(
+    config.s3_dsn.get_secret_value(),
+    config.s3_region,
+    config.s3_username.get_secret_value(),
+    config.s3_password.get_secret_value()
+)
 
 app = FastAPI(title=config.title, lifespan=lifespan)
 
@@ -35,6 +43,7 @@ app.state.redis = redis
 app.state.locales = LocalesController(redis)
 app.state.single_device_games = SingleDeviceGamesController(redis)
 app.state.multi_device_games = MultiDeviceGamesController(redis)
+app.state.qr_codes = QRCodesController(s3_config)
 
 app.include_router(api_router)
 

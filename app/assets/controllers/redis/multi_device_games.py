@@ -35,7 +35,8 @@ class MultiDeviceGamesController(RedisController):
             host_id: UUID,
             telegram_id: int,
             first_name: str,
-            player_amount: int
+            player_amount: int,
+            qr_code_url: str | None = None
     ) -> MultiDeviceGame:
         secret_word: str = SecretWordsController.get_random_secret_word()
 
@@ -43,6 +44,7 @@ class MultiDeviceGamesController(RedisController):
             host_id=host_id,
             player_amount=player_amount,
             secret_word=secret_word,
+            qr_code_url=qr_code_url,
             controller=self
         )
         game.players.add(

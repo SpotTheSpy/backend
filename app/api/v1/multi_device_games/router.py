@@ -14,16 +14,17 @@ from app.api.v1.exceptions.not_in_game import NotInGameError
 from app.api.v1.models.pagination import PaginatedResult, PaginationParams
 from app.api.v1.multi_device_games.models import (
     MultiDeviceGameModel,
-    CreateMultiDeviceGameModel
+    CreateMultiDeviceGameModel, SetGameURLModel
 )
 from app.api.v1.security.authenticator import Authenticator
 from app.assets.controllers.redis.multi_device_games import MultiDeviceGamesController
+from app.assets.controllers.s3.qr_codes import QRCodesController
 from app.assets.objects.multi_device_active_player import MultiDeviceActivePlayer
 from app.assets.objects.multi_device_game import MultiDeviceGame
 from app.assets.objects.multi_device_player import MultiDevicePlayer
 from app.assets.parameters import Parameters
 from app.database.models import User
-from app.dependencies import multi_device_games_dependency, database_session
+from app.dependencies import multi_device_games_dependency, database_session, qr_codes_dependency
 
 multi_device_games_router = APIRouter(prefix="/multi_device_games", tags=["Multi_device_games"])
 
@@ -129,12 +130,14 @@ async def get_multi_device_game_by_user_id(
 )
 async def delete_multi_device_game_by_uuid(
         game_id: UUID,
-        games_controller: Annotated[MultiDeviceGamesController, Depends(multi_device_games_dependency)]
+        games_controller: Annotated[MultiDeviceGamesController, Depends(multi_device_games_dependency)],
+        qr_codes_controller: Annotated[QRCodesController, Depends(qr_codes_dependency)]
 ) -> None:
     if not await games_controller.exists_game(game_id):
         raise NotFoundError("Game with provided UUID was not found")
 
     await games_controller.remove_game(game_id)
+    await qr_codes_controller.delete_qr_code(game_id)
 
 
 @multi_device_games_router.post(
@@ -236,4 +239,29 @@ async def start_game_by_uuid(
     game.start()
     await game.save()
 
+    return MultiDeviceGameModel.from_game(game)
+
+
+@multi_device_games_router.post(
+    "/{game_id}/url",
+    status_code=status.HTTP_201_CREATED,
+    response_model=MultiDeviceGameModel,
+    dependencies=[Authenticator.verify_api_key()],
+    description="Set game url by UUID"
+)
+async def set_game_url_by_uuid(
+        game_id: UUID,
+        url_model: SetGameURLModel,
+        games_controller: Annotated[MultiDeviceGamesController, Depends(multi_device_games_dependency)],
+        qr_codes_controller: Annotated[QRCodesController, Depends(qr_codes_dependency)]
+) -> MultiDeviceGameModel:
+    game: MultiDeviceGame = await games_controller.get_game(game_id)
+
+    if game is None:
+        raise NotFoundError("Game with provided UUID was not found")
+
+    await qr_codes_controller.upload_qr_code(game.game_id, url_model.url)
+    game.qr_code_url = await qr_codes_controller.get_qr_code_url(game.game_id)
+
+    await game.save()
     return MultiDeviceGameModel.from_game(game)

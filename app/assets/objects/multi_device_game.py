@@ -25,6 +25,7 @@ class MultiDeviceGame(RedisObject):
 
     game_id: UUID = dataclass_field(default_factory=uuid4)
     has_started: bool = False
+    qr_code_url: str | None = None
 
     players: MultiDevicePlayers = dataclass_field(default_factory=MultiDevicePlayers)
 
@@ -37,6 +38,7 @@ class MultiDeviceGame(RedisObject):
             host_id: UUID,
             player_amount: int,
             secret_word: str,
+            qr_code_url: str | None = None,
             *,
             controller: 'MultiDeviceGamesController',
     ) -> 'MultiDeviceGame':
@@ -44,6 +46,7 @@ class MultiDeviceGame(RedisObject):
             host_id=host_id,
             player_amount=player_amount,
             secret_word=secret_word,
+            qr_code_url=qr_code_url,
             _controller=controller
         )
 
@@ -78,6 +81,7 @@ class MultiDeviceGame(RedisObject):
             "has_started": self.has_started,
             "player_amount": self.player_amount,
             "secret_word": self.secret_word,
+            "qr_code_url": self.qr_code_url,
             "players": self.players.to_json()
         }
 

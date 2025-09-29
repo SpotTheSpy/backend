@@ -34,6 +34,7 @@ class MultiDeviceGameModel(BaseModel):
     has_started: bool
     player_amount: int = Field(ge=Parameters.MIN_PLAYER_AMOUNT, le=Parameters.MAX_PLAYER_AMOUNT)
     secret_word: str = Field(min_length=2, max_length=32)
+    qr_code_url: str | None = Field(min_length=16, default=None)
     players: List[MultiDevicePlayerModel]
 
     @classmethod
@@ -47,6 +48,7 @@ class MultiDeviceGameModel(BaseModel):
             has_started=game.has_started,
             player_amount=game.player_amount,
             secret_word=game.secret_word,
+            qr_code_url=game.qr_code_url,
             players=[MultiDevicePlayerModel.from_player(player) for player in game.players.list]
         )
 
@@ -54,3 +56,7 @@ class MultiDeviceGameModel(BaseModel):
 class CreateMultiDeviceGameModel(BaseModel):
     host_id: UUID
     player_amount: int = Field(ge=Parameters.MIN_PLAYER_AMOUNT, le=Parameters.MAX_PLAYER_AMOUNT)
+
+
+class SetGameURLModel(BaseModel):
+    url: str = Field(min_length=16)
