@@ -9,9 +9,10 @@ from app.api.v1.exceptions.not_found import NotFoundError
 from app.api.v1.models.pagination import PaginatedResult, PaginationParams
 from app.api.v1.security.authenticator import Authenticator
 from app.api.v1.single_device_games.models import SingleDeviceGameModel, CreateSingleDeviceGameModel
+from app.assets.controllers.redis.secret_words import SecretWordsController
 from app.assets.controllers.redis.single_device_games import SingleDeviceGamesController
 from app.assets.objects.single_device_game import SingleDeviceGame
-from app.dependencies import single_device_games_dependency
+from app.dependencies import single_device_games_dependency, secret_words_dependency
 
 single_device_games_router = APIRouter(prefix="/single_device_games", tags=["Single_device_games"])
 
@@ -25,15 +26,19 @@ single_device_games_router = APIRouter(prefix="/single_device_games", tags=["Sin
 )
 async def create_single_device_game(
         game_model: CreateSingleDeviceGameModel,
+        secret_words_controller: Annotated[SecretWordsController, Depends(secret_words_dependency)],
         games_controller: Annotated[SingleDeviceGamesController, Depends(single_device_games_dependency)]
 ) -> SingleDeviceGameModel:
     if await games_controller.players_controller.exists_player(game_model.user_id):
         raise AlreadyInGameError("You are already in game")
 
+    secret_word: str = await secret_words_controller.get_random_secret_word(game_model.user_id)
+
     game: SingleDeviceGame = await games_controller.create_game(
         game_model.user_id,
         game_model.telegram_id,
-        game_model.player_amount
+        game_model.player_amount,
+        secret_word
     )
 
     return SingleDeviceGameModel.from_game(game)

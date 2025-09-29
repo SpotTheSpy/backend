@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
 from app.assets.controllers.redis.locales import LocalesController
+from app.assets.controllers.redis.secret_words import SecretWordsController
 from app.assets.controllers.redis.single_device_games import SingleDeviceGamesController
 from app.assets.controllers.s3.qr_codes import QRCodesController
 from app.assets.objects.multi_device_game import MultiDeviceGamesController
@@ -31,6 +32,10 @@ async def redis_dependency(request: Request) -> Redis:
 
 async def locales_dependency(request: Request) -> LocalesController:
     return request.app.state.locales
+
+
+async def secret_words_dependency(request: Request) -> SecretWordsController:
+    return request.app.state.secret_words
 
 
 async def single_device_games_dependency(request: Request) -> SingleDeviceGamesController:

@@ -11,6 +11,7 @@ from app.api.router import api_router
 from app.api.v1.exceptions.http import HTTPError
 from app.assets.controllers.redis.locales import LocalesController
 from app.assets.controllers.redis.multi_device_games import MultiDeviceGamesController
+from app.assets.controllers.redis.secret_words import SecretWordsController
 from app.assets.controllers.redis.single_device_games import SingleDeviceGamesController
 from app.assets.controllers.s3.abstract import S3Config
 from app.assets.controllers.s3.qr_codes import QRCodesController
@@ -41,6 +42,7 @@ app.state.config = config
 app.state.database = database
 app.state.redis = redis
 app.state.locales = LocalesController(redis)
+app.state.secret_words = SecretWordsController(redis)
 app.state.single_device_games = SingleDeviceGamesController(redis)
 app.state.multi_device_games = MultiDeviceGamesController(redis)
 app.state.qr_codes = QRCodesController(s3_config)

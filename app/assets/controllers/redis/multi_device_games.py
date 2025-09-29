@@ -5,7 +5,6 @@ from redis.asyncio import Redis
 
 from app.assets.controllers.redis.abstract import RedisController
 from app.assets.controllers.redis.multi_device_players import MultiDevicePlayersController
-from app.assets.data.secret_words_controller import SecretWordsController
 from app.assets.objects.multi_device_active_player import MultiDeviceActivePlayer
 from app.assets.objects.multi_device_game import MultiDeviceGame
 from app.assets.objects.multi_device_player import MultiDevicePlayer
@@ -36,10 +35,9 @@ class MultiDeviceGamesController(RedisController):
             telegram_id: int,
             first_name: str,
             player_amount: int,
+            secret_word: str,
             qr_code_url: str | None = None
     ) -> MultiDeviceGame:
-        secret_word: str = SecretWordsController.get_random_secret_word()
-
         game = MultiDeviceGame.new(
             host_id=host_id,
             player_amount=player_amount,

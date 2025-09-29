@@ -18,13 +18,15 @@ from app.api.v1.multi_device_games.models import (
 )
 from app.api.v1.security.authenticator import Authenticator
 from app.assets.controllers.redis.multi_device_games import MultiDeviceGamesController
+from app.assets.controllers.redis.secret_words import SecretWordsController
 from app.assets.controllers.s3.qr_codes import QRCodesController
 from app.assets.objects.multi_device_active_player import MultiDeviceActivePlayer
 from app.assets.objects.multi_device_game import MultiDeviceGame
 from app.assets.objects.multi_device_player import MultiDevicePlayer
 from app.assets.parameters import Parameters
 from app.database.models import User
-from app.dependencies import multi_device_games_dependency, database_session, qr_codes_dependency
+from app.dependencies import multi_device_games_dependency, database_session, qr_codes_dependency, \
+    secret_words_dependency
 
 multi_device_games_router = APIRouter(prefix="/multi_device_games", tags=["Multi_device_games"])
 
@@ -39,6 +41,7 @@ multi_device_games_router = APIRouter(prefix="/multi_device_games", tags=["Multi
 async def create_multi_device_game(
         game_model: CreateMultiDeviceGameModel,
         session: Annotated[AsyncSession, Depends(database_session)],
+        secret_words_controller: Annotated[SecretWordsController, Depends(secret_words_dependency)],
         games_controller: Annotated[MultiDeviceGamesController, Depends(multi_device_games_dependency)]
 ) -> MultiDeviceGameModel:
     if await games_controller.players_controller.exists_player(game_model.host_id):
@@ -52,11 +55,14 @@ async def create_multi_device_game(
     if user is None:
         raise NotFoundError("User with provided UUID was not found")
 
+    secret_word: str = await secret_words_controller.get_random_secret_word(game_model.host_id)
+
     game: MultiDeviceGame = await games_controller.create_game(
         user.id,
         user.telegram_id,
         user.first_name,
-        game_model.player_amount
+        game_model.player_amount,
+        secret_word,
     )
 
     return MultiDeviceGameModel.from_game(game)
