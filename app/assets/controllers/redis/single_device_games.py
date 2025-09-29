@@ -5,9 +5,8 @@ from redis.asyncio import Redis
 
 from app.assets.controllers.redis.abstract import RedisController
 from app.assets.controllers.redis.single_device_players import SingleDevicePlayersController
-from app.assets.data.secret_words_controller import SecretWordsController
-from app.assets.objects.single_device_player import SingleDevicePlayer
 from app.assets.objects.single_device_game import SingleDeviceGame
+from app.assets.objects.single_device_player import SingleDevicePlayer
 
 
 class SingleDeviceGamesController(RedisController):
@@ -33,10 +32,9 @@ class SingleDeviceGamesController(RedisController):
             self,
             user_id: UUID,
             telegram_id: int,
-            player_amount: int
+            player_amount: int,
+            secret_word: str
     ) -> SingleDeviceGame:
-        secret_word: str = SecretWordsController.get_random_secret_word()
-
         game = SingleDeviceGame.new(
             user_id=user_id,
             telegram_id=telegram_id,
