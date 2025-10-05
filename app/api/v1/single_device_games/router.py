@@ -2,6 +2,8 @@ from typing import Annotated, Tuple
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from app.api.v1.exceptions.already_in_game import AlreadyInGameError
@@ -12,7 +14,8 @@ from app.api.v1.single_device_games.models import SingleDeviceGameModel, CreateS
 from app.assets.controllers.redis.secret_words import SecretWordsController
 from app.assets.controllers.redis.single_device_games import SingleDeviceGamesController
 from app.assets.objects.single_device_game import SingleDeviceGame
-from app.dependencies import single_device_games_dependency, secret_words_dependency
+from app.database.models import User
+from app.dependencies import single_device_games_dependency, secret_words_dependency, database_session
 
 single_device_games_router = APIRouter(prefix="/single_device_games", tags=["Single_device_games"])
 
@@ -26,9 +29,13 @@ single_device_games_router = APIRouter(prefix="/single_device_games", tags=["Sin
 )
 async def create_single_device_game(
         game_model: CreateSingleDeviceGameModel,
+        session: Annotated[AsyncSession, Depends(database_session)],
         secret_words_controller: Annotated[SecretWordsController, Depends(secret_words_dependency)],
         games_controller: Annotated[SingleDeviceGamesController, Depends(single_device_games_dependency)]
 ) -> SingleDeviceGameModel:
+    if not await session.scalar(select(User).filter_by(id=game_model.user_id).exists().select()):
+        raise NotFoundError("User with provided UUID was not found")
+
     if await games_controller.players_controller.exists_player(game_model.user_id):
         raise AlreadyInGameError("You are already in game")
 
