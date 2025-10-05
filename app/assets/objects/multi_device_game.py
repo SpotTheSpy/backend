@@ -9,7 +9,7 @@ from pydantic.dataclasses import dataclass
 from app.assets.controllers.context.multi_device_players import MultiDevicePlayers
 from app.assets.enums.player_role import PlayerRole
 from app.assets.objects.redis import RedisObject
-from app.workers.tasks import save_multi_device_game, clear_multi_device_game
+from app.workers.tasks import save_to_redis, clear_from_redis
 
 if TYPE_CHECKING:
     from app.assets.controllers.redis.multi_device_games import MultiDeviceGamesController
@@ -88,10 +88,10 @@ class MultiDeviceGame(RedisObject):
         }
 
     async def save(self) -> None:
-        await asyncio.to_thread(save_multi_device_game.delay, self.to_json())
+        await asyncio.to_thread(save_to_redis.delay, self.controller.key(self.game_id), self.to_json())
 
     async def clear(self) -> None:
-        await asyncio.to_thread(clear_multi_device_game.delay, self.to_json())
+        await asyncio.to_thread(clear_from_redis.delay, self.controller.key(self.game_id))
 
     @property
     def controller(self) -> 'MultiDeviceGamesController':

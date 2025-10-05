@@ -1,6 +1,8 @@
 from celery import Celery
 
-from app.asgi import config
+from config import Config
+
+config = Config(_env_file=".env")
 
 
 def create_worker() -> Celery:

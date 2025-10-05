@@ -5,7 +5,7 @@ from uuid import UUID
 from pydantic.dataclasses import dataclass
 
 from app.assets.objects.redis import RedisObject
-from app.workers.tasks import save_single_device_player, clear_single_device_player
+from app.workers.tasks import save_to_redis, clear_from_redis
 
 if TYPE_CHECKING:
     from app.assets.controllers.redis.single_device_games import SingleDeviceGamesController
@@ -50,10 +50,10 @@ class SingleDeviceActivePlayer(RedisObject):
         }
 
     async def save(self) -> None:
-        await asyncio.to_thread(save_single_device_player.delay, self.to_json())
+        await asyncio.to_thread(save_to_redis.delay, self.controller.key(self.user_id), self.to_json())
 
     async def clear(self) -> None:
-        await asyncio.to_thread(clear_single_device_player.delay, self.to_json())
+        await asyncio.to_thread(clear_from_redis.delay, self.controller.key(self.user_id))
 
     @property
     def controller(self) -> 'SingleDeviceGamesController':
