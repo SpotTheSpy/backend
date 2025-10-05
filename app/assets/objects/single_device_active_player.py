@@ -1,9 +1,11 @@
+import asyncio
 from typing import Any, Dict, TYPE_CHECKING
 from uuid import UUID
 
 from pydantic.dataclasses import dataclass
 
 from app.assets.objects.redis import RedisObject
+from app.workers.tasks import save_single_device_player, clear_single_device_player
 
 if TYPE_CHECKING:
     from app.assets.controllers.redis.single_device_games import SingleDeviceGamesController
@@ -48,10 +50,10 @@ class SingleDeviceActivePlayer(RedisObject):
         }
 
     async def save(self) -> None:
-        await self._controller.set(self._controller.key(self.game_id), self.to_json())
+        await asyncio.to_thread(save_single_device_player.delay, self.to_json())
 
     async def clear(self) -> None:
-        await self._controller.remove(self._controller.key(self.game_id))
+        await asyncio.to_thread(clear_single_device_player.delay, self.to_json())
 
     @property
     def controller(self) -> 'SingleDeviceGamesController':

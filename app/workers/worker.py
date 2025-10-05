@@ -3,7 +3,7 @@ from celery import Celery
 from app.asgi import config
 
 
-def create_worker():
+def create_worker() -> Celery:
     celery = Celery(
         "worker",
         broker=config.rabbitmq_dsn.get_secret_value(),

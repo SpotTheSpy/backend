@@ -1,3 +1,4 @@
+import asyncio
 from dataclasses import field as dataclass_field
 from random import randint
 from typing import Dict, Any, TYPE_CHECKING
@@ -6,6 +7,7 @@ from uuid import UUID, uuid4
 from pydantic.dataclasses import dataclass
 
 from app.assets.objects.redis import RedisObject
+from app.workers.tasks import save_single_device_game, clear_single_device_game
 
 if TYPE_CHECKING:
     from app.assets.controllers.redis.single_device_games import SingleDeviceGamesController
@@ -63,10 +65,10 @@ class SingleDeviceGame(RedisObject):
         }
 
     async def save(self) -> None:
-        await self._controller.set(self._controller.key(self.game_id), self.to_json())
+        await asyncio.to_thread(save_single_device_game.delay, self.to_json())
 
     async def clear(self) -> None:
-        await self._controller.remove(self._controller.key(self.game_id))
+        await asyncio.to_thread(clear_single_device_game.delay, self.to_json())
 
     @property
     def controller(self) -> 'SingleDeviceGamesController':
