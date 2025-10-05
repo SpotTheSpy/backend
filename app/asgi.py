@@ -9,7 +9,6 @@ from starlette.responses import JSONResponse
 
 from app.api.router import api_router
 from app.api.v1.exceptions.http import HTTPError
-from app.assets.controllers.redis.locales import LocalesController
 from app.assets.controllers.redis.multi_device_games import MultiDeviceGamesController
 from app.assets.controllers.redis.secret_words import SecretWordsController
 from app.assets.controllers.redis.single_device_games import SingleDeviceGamesController
@@ -41,7 +40,6 @@ app = FastAPI(title=config.title, lifespan=lifespan)
 app.state.config = config
 app.state.database = database
 app.state.redis = redis
-app.state.locales = LocalesController(redis)
 app.state.secret_words = SecretWordsController(redis)
 app.state.single_device_games = SingleDeviceGamesController(redis)
 app.state.multi_device_games = MultiDeviceGamesController(redis)

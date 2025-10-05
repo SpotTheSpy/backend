@@ -39,18 +39,3 @@ class UpdateUserModel(BaseModel):
     first_name: str | None = Field(max_length=64, default=None)
     username: str | None = Field(min_length=5, max_length=32, default=None)
     locale: Annotated[str | None, LocaleStr] = None
-
-
-class UserLocaleModel(BaseModel):
-    locale: Annotated[str | None, LocaleStr] = None
-
-    @classmethod
-    def from_database_model(
-            cls,
-            user: User
-    ) -> 'UserLocaleModel':
-        return cls(locale=user.locale)
-
-
-class UpdateUserLocaleModel(BaseModel):
-    locale: Annotated[str | None, LocaleStr] = None
