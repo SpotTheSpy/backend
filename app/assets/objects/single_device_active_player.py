@@ -1,7 +1,5 @@
-from dataclasses import field as dataclass_field
-from random import randint
-from typing import Dict, Any, TYPE_CHECKING
-from uuid import UUID, uuid4
+from typing import Any, Dict, TYPE_CHECKING
+from uuid import UUID
 
 from pydantic.dataclasses import dataclass
 
@@ -14,33 +12,23 @@ else:
 
 
 @dataclass
-class SingleDeviceGame(RedisObject):
+class SingleDeviceActivePlayer(RedisObject):
+    game_id: UUID
     user_id: UUID
-    player_amount: int
-    secret_word: str
 
     _controller: 'SingleDeviceGamesController'
-
-    game_id: UUID = dataclass_field(default_factory=uuid4)
-    spy_index: int | None = None
-
-    def __post_init__(self) -> None:
-        if self.spy_index is None:
-            self.spy_index = randint(0, self.player_amount - 1)
 
     @classmethod
     def new(
             cls,
+            game_id: UUID,
             user_id: UUID,
-            player_amount: int,
-            secret_word: str,
             *,
             controller: 'SingleDeviceGamesController',
-    ) -> 'SingleDeviceGame':
+    ) -> 'SingleDeviceActivePlayer':
         return cls(
+            game_id=game_id,
             user_id=user_id,
-            player_amount=player_amount,
-            secret_word=secret_word,
             _controller=controller
         )
 
@@ -50,16 +38,13 @@ class SingleDeviceGame(RedisObject):
             data: Dict[str, Any],
             *,
             controller: 'SingleDeviceGamesController'
-    ) -> 'SingleDeviceGame':
+    ) -> Any:
         return cls(**data, _controller=controller)
 
     def to_json(self) -> Dict[str, Any]:
         return {
             "game_id": str(self.game_id),
-            "user_id": str(self.user_id),
-            "player_amount": self.player_amount,
-            "secret_word": self.secret_word,
-            "spy_index": self.spy_index
+            "user_id": str(self.user_id)
         }
 
     async def save(self) -> None:

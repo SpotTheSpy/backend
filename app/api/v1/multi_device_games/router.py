@@ -20,7 +20,6 @@ from app.api.v1.security.authenticator import Authenticator
 from app.assets.controllers.redis.multi_device_games import MultiDeviceGamesController
 from app.assets.controllers.redis.secret_words import SecretWordsController
 from app.assets.controllers.s3.qr_codes import QRCodesController
-from app.assets.objects.multi_device_active_player import MultiDeviceActivePlayer
 from app.assets.objects.multi_device_game import MultiDeviceGame
 from app.assets.objects.multi_device_player import MultiDevicePlayer
 from app.assets.parameters import Parameters
@@ -187,11 +186,10 @@ async def join_game_by_uuid(
         )
     )
     await games_controller.players_controller.create_player(
-        MultiDeviceActivePlayer(
-            user_id=user.id,
-            game_id=game.game_id
-        )
+        user_id=user.id,
+        game_id=game.game_id
     )
+
     await game.save()
 
     return MultiDeviceGameModel.from_game(game)

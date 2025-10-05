@@ -14,9 +14,18 @@ class MultiDevicePlayersController(RedisController):
 
     async def create_player(
             self,
-            player: MultiDeviceActivePlayer
-    ) -> None:
-        await self.set(self.key(player.user_id), player.to_json())
+            game_id: UUID,
+            user_id: UUID
+    ) -> MultiDeviceActivePlayer:
+        player = MultiDeviceActivePlayer.new(
+            game_id=game_id,
+            user_id=user_id,
+            controller=self
+        )
+
+        await player.save()
+
+        return player
 
     async def get_player(
             self,
@@ -27,7 +36,7 @@ class MultiDevicePlayersController(RedisController):
         if player_json is None:
             return
 
-        return MultiDeviceActivePlayer.from_json(player_json)
+        return MultiDeviceActivePlayer.from_json(player_json, controller=self)
 
     async def exists_player(
             self,
@@ -39,4 +48,9 @@ class MultiDevicePlayersController(RedisController):
             self,
             user_id: UUID
     ) -> None:
-        await self.remove(self.key(user_id))
+        player: MultiDeviceActivePlayer | None = await self.get_player(user_id)
+
+        if player is None:
+            return
+
+        await player.clear()

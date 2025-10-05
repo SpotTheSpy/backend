@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 from fastapi_sa_orm_filter import FilterCore
-from sqlalchemy import select, or_, update, Select, delete
+from sqlalchemy import select, update, Select, delete
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
@@ -32,19 +32,6 @@ async def create_user(
         user_model: CreateUserModel,
         session: Annotated[AsyncSession, Depends(database_session)]
 ) -> UserModel:
-    if user_model.username is None:
-        select_query: Select = select(User).filter_by(telegram_id=user_model.telegram_id)
-    else:
-        select_query: Select = select(User).filter(
-            or_(
-                User.telegram_id == user_model.telegram_id,
-                User.username == user_model.username
-            )
-        )
-
-    if await session.scalar(select_query.exists().select()):
-        raise AlreadyExistsError("User with provided credentials already exists")
-
     user = User(
         telegram_id=user_model.telegram_id,
         first_name=user_model.first_name,
@@ -52,7 +39,11 @@ async def create_user(
         locale=user_model.locale
     )
     session.add(user)
-    await session.commit()
+
+    try:
+        await session.commit()
+    except IntegrityError:
+        raise AlreadyExistsError("User with provided credentials already exists")
 
     return UserModel.from_database_model(user)
 
