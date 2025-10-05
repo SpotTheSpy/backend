@@ -36,7 +36,7 @@ class MultiDeviceGamesController(RedisController):
             first_name: str,
             player_amount: int,
             secret_word: str,
-            qr_code_url: str | None = None
+            qr_code_url: str
     ) -> MultiDeviceGame:
         game = MultiDeviceGame.new(
             host_id=host_id,

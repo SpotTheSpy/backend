@@ -42,7 +42,8 @@ async def create_multi_device_game(
         game_model: CreateMultiDeviceGameModel,
         session: Annotated[AsyncSession, Depends(database_session)],
         secret_words_controller: Annotated[SecretWordsController, Depends(secret_words_dependency)],
-        games_controller: Annotated[MultiDeviceGamesController, Depends(multi_device_games_dependency)]
+        games_controller: Annotated[MultiDeviceGamesController, Depends(multi_device_games_dependency)],
+        qr_codes_controller: Annotated[QRCodesController, Depends(qr_codes_dependency)]
 ) -> MultiDeviceGameModel:
     user: User | None = await session.scalar(
         select(User)
@@ -63,6 +64,7 @@ async def create_multi_device_game(
         user.first_name,
         game_model.player_amount,
         secret_word,
+        await qr_codes_controller.get_blurred_url()
     )
 
     return MultiDeviceGameModel.from_game(game)
