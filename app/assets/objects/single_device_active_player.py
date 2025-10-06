@@ -4,21 +4,21 @@ from uuid import UUID
 
 from pydantic.dataclasses import dataclass
 
-from app.assets.objects.base import BaseObject
+from app.assets.objects.redis import RedisObject
 from app.workers.tasks import save_to_redis, clear_from_redis
 
 if TYPE_CHECKING:
-    from app.assets.controllers.redis.multi_device_players import MultiDevicePlayersController
+    from app.assets.controllers.redis.single_device_games import SingleDeviceGamesController
 else:
-    MultiDevicePlayersController = Any
+    SingleDeviceGamesController = Any
 
 
 @dataclass
-class MultiDeviceActivePlayer(BaseObject):
+class SingleDeviceActivePlayer(RedisObject):
     game_id: UUID
     user_id: UUID
 
-    _controller: 'MultiDevicePlayersController'
+    _controller: 'SingleDeviceGamesController'
 
     @classmethod
     def new(
@@ -26,8 +26,8 @@ class MultiDeviceActivePlayer(BaseObject):
             game_id: UUID,
             user_id: UUID,
             *,
-            controller: 'MultiDevicePlayersController'
-    ) -> 'MultiDeviceActivePlayer':
+            controller: 'SingleDeviceGamesController',
+    ) -> 'SingleDeviceActivePlayer':
         return cls(
             game_id=game_id,
             user_id=user_id,
@@ -39,7 +39,7 @@ class MultiDeviceActivePlayer(BaseObject):
             cls,
             data: Dict[str, Any],
             *,
-            controller: 'MultiDevicePlayersController'
+            controller: 'SingleDeviceGamesController'
     ) -> Any:
         return cls(**data, _controller=controller)
 
@@ -56,5 +56,5 @@ class MultiDeviceActivePlayer(BaseObject):
         await asyncio.to_thread(clear_from_redis.delay, self.controller.key(self.user_id))
 
     @property
-    def controller(self) -> 'MultiDevicePlayersController':
+    def controller(self) -> 'SingleDeviceGamesController':
         return self._controller

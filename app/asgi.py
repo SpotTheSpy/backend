@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -9,7 +10,6 @@ from starlette.responses import JSONResponse
 
 from app.api.router import api_router
 from app.api.v1.exceptions.http import HTTPError
-from app.assets.controllers.redis.locales import LocalesController
 from app.assets.controllers.redis.multi_device_games import MultiDeviceGamesController
 from app.assets.controllers.redis.secret_words import SecretWordsController
 from app.assets.controllers.redis.single_device_games import SingleDeviceGamesController
@@ -20,9 +20,18 @@ from app.logging import logger
 from config import Config
 
 
+def get_blurred_qr_code() -> bytes:
+    with open("app/assets/data/blurred.jpg", "rb") as file:
+        return file.read()
+
+
 @asynccontextmanager
 async def lifespan(fastapi_app: FastAPI):
+    blurred_qr_code: bytes = await asyncio.to_thread(get_blurred_qr_code)
+    await fastapi_app.state.qr_codes.add("blurred.jpg", blurred_qr_code)
+
     yield
+
     await fastapi_app.state.redis.close()
 
 
@@ -41,7 +50,6 @@ app = FastAPI(title=config.title, lifespan=lifespan)
 app.state.config = config
 app.state.database = database
 app.state.redis = redis
-app.state.locales = LocalesController(redis)
 app.state.secret_words = SecretWordsController(redis)
 app.state.single_device_games = SingleDeviceGamesController(redis)
 app.state.multi_device_games = MultiDeviceGamesController(redis)

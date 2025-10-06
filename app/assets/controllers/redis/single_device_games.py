@@ -5,8 +5,8 @@ from redis.asyncio import Redis
 
 from app.assets.controllers.redis.abstract import RedisController
 from app.assets.controllers.redis.single_device_players import SingleDevicePlayersController
+from app.assets.objects.single_device_active_player import SingleDeviceActivePlayer
 from app.assets.objects.single_device_game import SingleDeviceGame
-from app.assets.objects.single_device_player import SingleDevicePlayer
 
 
 class SingleDeviceGamesController(RedisController):
@@ -31,13 +31,11 @@ class SingleDeviceGamesController(RedisController):
     async def create_game(
             self,
             user_id: UUID,
-            telegram_id: int,
             player_amount: int,
             secret_word: str
     ) -> SingleDeviceGame:
         game = SingleDeviceGame.new(
             user_id=user_id,
-            telegram_id=telegram_id,
             player_amount=player_amount,
             secret_word=secret_word,
             controller=self
@@ -46,10 +44,8 @@ class SingleDeviceGamesController(RedisController):
         await game.save()
 
         await self.players_controller.create_player(
-            SingleDevicePlayer(
-                user_id=user_id,
-                game_id=game.game_id
-            )
+            user_id=user_id,
+            game_id=game.game_id
         )
 
         return game
@@ -86,7 +82,7 @@ class SingleDeviceGamesController(RedisController):
             self,
             user_id: UUID
     ) -> SingleDeviceGame | None:
-        player: SingleDevicePlayer | None = await self.players_controller.get_player(user_id)
+        player: SingleDeviceActivePlayer | None = await self.players_controller.get_player(user_id)
 
         if player is None:
             return
@@ -103,8 +99,10 @@ class SingleDeviceGamesController(RedisController):
             self,
             game_id: UUID
     ) -> None:
-        game: SingleDeviceGame = await self.get_game(game_id)
+        game: SingleDeviceGame | None = await self.get_game(game_id)
+
+        if game is None:
+            return
 
         await self.players_controller.remove_player(game.user_id)
-
         await game.clear()

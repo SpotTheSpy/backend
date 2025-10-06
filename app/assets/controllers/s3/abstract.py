@@ -49,7 +49,7 @@ class S3Controller(ABC):
             self,
             name: str,
             *,
-            expire: int = 60
+            expire: int = 300
     ) -> str | None:
         async with self._get_client() as client:
             try:
@@ -85,6 +85,6 @@ class S3Controller(ABC):
                 endpoint_url=self.s3.dsn,
                 region_name=self.s3.region,
                 aws_access_key_id=self.s3.username,
-                aws_secret_access_key=self.s3.password,
+                aws_secret_access_key=self.s3.password
         ) as client:
             yield client

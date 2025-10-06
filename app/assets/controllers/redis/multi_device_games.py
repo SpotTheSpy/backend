@@ -36,7 +36,7 @@ class MultiDeviceGamesController(RedisController):
             first_name: str,
             player_amount: int,
             secret_word: str,
-            qr_code_url: str | None = None
+            qr_code_url: str
     ) -> MultiDeviceGame:
         game = MultiDeviceGame.new(
             host_id=host_id,
@@ -57,10 +57,9 @@ class MultiDeviceGamesController(RedisController):
         await game.save()
 
         await self.players_controller.create_player(
-            MultiDeviceActivePlayer(
-                user_id=host_id,
-                game_id=game.game_id
-            )
+            game_id=game.game_id,
+            user_id=host_id,
+
         )
 
         return game
@@ -117,7 +116,10 @@ class MultiDeviceGamesController(RedisController):
             self,
             game_id: UUID
     ) -> None:
-        game: MultiDeviceGame = await self.get_game(game_id)
+        game: MultiDeviceGame | None = await self.get_game(game_id)
+
+        if game is None:
+            return
 
         for user_id in game.players.ids:
             await self.players_controller.remove_player(user_id)

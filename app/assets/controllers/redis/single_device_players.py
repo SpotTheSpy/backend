@@ -2,7 +2,7 @@ from typing import Dict, Any
 from uuid import UUID
 
 from app.assets.controllers.redis.abstract import RedisController
-from app.assets.objects.single_device_player import SingleDevicePlayer
+from app.assets.objects.single_device_active_player import SingleDeviceActivePlayer
 
 
 class SingleDevicePlayersController(RedisController):
@@ -14,20 +14,29 @@ class SingleDevicePlayersController(RedisController):
 
     async def create_player(
             self,
-            player: SingleDevicePlayer
-    ) -> None:
-        await self.set(self.key(player.user_id), player.to_json())
+            game_id: UUID,
+            user_id: UUID
+    ) -> SingleDeviceActivePlayer:
+        player = SingleDeviceActivePlayer.new(
+            game_id=game_id,
+            user_id=user_id,
+            controller=self
+        )
+
+        await player.save()
+
+        return player
 
     async def get_player(
             self,
             user_id: UUID
-    ) -> SingleDevicePlayer | None:
+    ) -> SingleDeviceActivePlayer | None:
         player_json: Dict[str, Any] = await self.get(self.key(user_id))
 
         if player_json is None:
             return
 
-        return SingleDevicePlayer.from_json(player_json)
+        return SingleDeviceActivePlayer.from_json(player_json, controller=self)
 
     async def exists_player(
             self,
@@ -39,4 +48,9 @@ class SingleDevicePlayersController(RedisController):
             self,
             user_id: UUID
     ) -> None:
-        await self.remove(self.key(user_id))
+        player: SingleDeviceActivePlayer | None = await self.get_player(user_id)
+
+        if player is None:
+            return
+
+        await player.clear()

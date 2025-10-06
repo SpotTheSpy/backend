@@ -11,7 +11,11 @@ class Config(BaseSettings):
 
     database_dsn: SecretStr
     test_database_dsn: SecretStr | None = None
+
     redis_dsn: SecretStr
+
+    rabbitmq_dsn: SecretStr
+    result_backend_dsn: SecretStr | None = None
 
     s3_dsn: SecretStr
     s3_region: str = "eu-central-1"

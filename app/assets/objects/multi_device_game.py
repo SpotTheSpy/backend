@@ -1,3 +1,4 @@
+import asyncio
 from dataclasses import field as dataclass_field
 from random import randint
 from typing import Dict, Any, TYPE_CHECKING, Optional, List
@@ -8,6 +9,7 @@ from pydantic.dataclasses import dataclass
 from app.assets.controllers.context.multi_device_players import MultiDevicePlayers
 from app.assets.enums.player_role import PlayerRole
 from app.assets.objects.redis import RedisObject
+from app.workers.tasks import save_to_redis, clear_from_redis
 
 if TYPE_CHECKING:
     from app.assets.controllers.redis.multi_device_games import MultiDeviceGamesController
@@ -20,12 +22,12 @@ class MultiDeviceGame(RedisObject):
     host_id: UUID
     player_amount: int
     secret_word: str
+    qr_code_url: str
 
     _controller: 'MultiDeviceGamesController'
 
     game_id: UUID = dataclass_field(default_factory=uuid4)
     has_started: bool = False
-    qr_code_url: str | None = None
 
     players: MultiDevicePlayers = dataclass_field(default_factory=MultiDevicePlayers)
 
@@ -38,7 +40,7 @@ class MultiDeviceGame(RedisObject):
             host_id: UUID,
             player_amount: int,
             secret_word: str,
-            qr_code_url: str | None = None,
+            qr_code_url: str,
             *,
             controller: 'MultiDeviceGamesController',
     ) -> 'MultiDeviceGame':
@@ -86,10 +88,10 @@ class MultiDeviceGame(RedisObject):
         }
 
     async def save(self) -> None:
-        await self._controller.set(self._controller.key(self.game_id), self.to_json())
+        await asyncio.to_thread(save_to_redis.delay, self.controller.key(self.game_id), self.to_json())
 
     async def clear(self) -> None:
-        await self._controller.remove(self._controller.key(self.game_id))
+        await asyncio.to_thread(clear_from_redis.delay, self.controller.key(self.game_id))
 
     @property
     def controller(self) -> 'MultiDeviceGamesController':
