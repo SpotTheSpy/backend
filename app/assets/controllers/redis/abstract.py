@@ -1,5 +1,5 @@
 import asyncio
-from abc import ABC, abstractmethod
+from abc import ABC
 from json import dumps, loads
 from typing import Any, Tuple, List, Generic, TypeVar
 
@@ -23,9 +23,17 @@ class AbstractRedisController(Generic[T], ABC):
         self._default_key: str = default_key or Parameters.DEFAULT_REDIS_KEY
 
     @property
-    @abstractmethod
     def key(self) -> str:
-        pass
+        if not hasattr(self, "__orig_class__"):
+            raise ValueError("Generic redis object class is not set")
+        classes = getattr(self, "__orig_class__").__args__
+        if not classes:
+            raise ValueError("Generic redis object class is not set")
+
+        try:
+            return classes[0].key
+        except NameError:
+            raise ValueError("Name attribute in generic redis object class is not set")
 
     async def set(
             self,
