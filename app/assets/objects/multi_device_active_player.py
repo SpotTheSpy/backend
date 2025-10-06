@@ -4,7 +4,7 @@ from uuid import UUID
 
 from pydantic.dataclasses import dataclass
 
-from app.assets.objects.base import BaseObject
+from app.assets.objects.redis import RedisObject
 from app.workers.tasks import save_to_redis, clear_from_redis
 
 if TYPE_CHECKING:
@@ -14,7 +14,7 @@ else:
 
 
 @dataclass
-class MultiDeviceActivePlayer(BaseObject):
+class MultiDeviceActivePlayer(RedisObject):
     game_id: UUID
     user_id: UUID
 
