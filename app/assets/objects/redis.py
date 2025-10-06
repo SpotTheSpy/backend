@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import ClassVar, TYPE_CHECKING, Any
 
 from pydantic.dataclasses import dataclass
@@ -6,7 +6,7 @@ from pydantic.dataclasses import dataclass
 from app.assets.objects.abstract import AbstractObject
 
 if TYPE_CHECKING:
-    from app.assets.controllers.redis.abstract import AbstractRedisController
+    from app.assets.controllers.redis.redis import RedisController
 else:
     AbstractRedisController = Any
 
@@ -15,10 +15,10 @@ else:
 class AbstractRedisObject(AbstractObject, ABC):
     key: ClassVar[str]
 
-    _controller: 'AbstractRedisController'
+    _controller: 'RedisController'
 
     @property
-    def controller(self) -> 'AbstractRedisController':
+    def controller(self) -> 'RedisController':
         return self._controller
 
     async def save(self) -> None:

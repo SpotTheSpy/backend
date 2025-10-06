@@ -14,6 +14,11 @@ class AbstractObject(ABC):
 
     @classmethod
     @abstractmethod
+    def new(cls, *args, **kwargs) -> Any:
+        pass
+
+    @classmethod
+    @abstractmethod
     def from_json(cls, *args, **kwargs) -> Any:
         pass
 

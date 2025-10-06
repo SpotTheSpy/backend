@@ -1,27 +1,21 @@
-import asyncio
 from dataclasses import field as dataclass_field
 from random import randint
-from typing import Dict, Any, TYPE_CHECKING
+from typing import Dict, Any, ClassVar
 from uuid import UUID, uuid4
 
 from pydantic.dataclasses import dataclass
 
+from app.assets.controllers.redis.redis import RedisController
 from app.assets.objects.redis import AbstractRedisObject
-from app.workers.tasks import save_to_redis, clear_from_redis
-
-if TYPE_CHECKING:
-    from app.assets.controllers.redis.single_device_games import SingleDeviceGamesController
-else:
-    SingleDeviceGamesController = Any
 
 
 @dataclass
 class SingleDeviceGame(AbstractRedisObject):
+    key: ClassVar[str] = "single_device_game"
+
     user_id: UUID
     player_amount: int
     secret_word: str
-
-    _controller: 'SingleDeviceGamesController'
 
     game_id: UUID = dataclass_field(default_factory=uuid4)
     spy_index: int | None = None
@@ -30,6 +24,10 @@ class SingleDeviceGame(AbstractRedisObject):
         if self.spy_index is None:
             self.spy_index = randint(0, self.player_amount - 1)
 
+    @property
+    def primary_key(self) -> UUID:
+        return self.game_id
+
     @classmethod
     def new(
             cls,
@@ -37,7 +35,7 @@ class SingleDeviceGame(AbstractRedisObject):
             player_amount: int,
             secret_word: str,
             *,
-            controller: 'SingleDeviceGamesController',
+            controller: 'RedisController',
     ) -> 'SingleDeviceGame':
         return cls(
             user_id=user_id,
@@ -51,7 +49,7 @@ class SingleDeviceGame(AbstractRedisObject):
             cls,
             data: Dict[str, Any],
             *,
-            controller: 'SingleDeviceGamesController'
+            controller: RedisController
     ) -> 'SingleDeviceGame':
         return cls(**data, _controller=controller)
 
@@ -63,13 +61,3 @@ class SingleDeviceGame(AbstractRedisObject):
             "secret_word": self.secret_word,
             "spy_index": self.spy_index
         }
-
-    async def save(self) -> None:
-        await asyncio.to_thread(save_to_redis.delay, self.controller.key(self.game_id), self.to_json())
-
-    async def clear(self) -> None:
-        await asyncio.to_thread(clear_from_redis.delay, self.controller.key(self.game_id))
-
-    @property
-    def controller(self) -> 'SingleDeviceGamesController':
-        return self._controller

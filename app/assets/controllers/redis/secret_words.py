@@ -2,10 +2,10 @@ from random import choice
 from typing import List, Set
 from uuid import UUID
 
-from app.assets.controllers.redis.abstract import AbstractRedisController
+from app.assets.controllers.redis.redis import RedisController
 
 
-class SecretWordsController(AbstractRedisController):
+class SecretWordsController(RedisController):
     _FILE_PATH: str = "app/assets/data/secret_words.txt"
     _GUARANTEE_UNIQUE_COUNT: int = 30
 

@@ -1,7 +1,9 @@
 import asyncio
 from abc import ABC
+from functools import partial
+from inspect import FullArgSpec, getfullargspec
 from json import dumps, loads
-from typing import Any, Tuple, List, Generic, TypeVar
+from typing import Any, Tuple, List, Generic, TypeVar, Type, Callable, Awaitable
 
 from redis.asyncio import Redis
 
@@ -12,7 +14,7 @@ from app.workers.tasks import save_to_redis, clear_from_redis
 T = TypeVar('T', bound=AbstractRedisObject)
 
 
-class AbstractRedisController(Generic[T], ABC):
+class RedisController(Generic[T], ABC):
     def __init__(
             self,
             redis: Redis,
@@ -23,17 +25,36 @@ class AbstractRedisController(Generic[T], ABC):
         self._default_key: str = default_key or Parameters.DEFAULT_REDIS_KEY
 
     @property
-    def key(self) -> str:
+    def object_class(self) -> Type[T]:
         if not hasattr(self, "__orig_class__"):
             raise ValueError("Generic redis object class is not set")
         classes = getattr(self, "__orig_class__").__args__
         if not classes:
             raise ValueError("Generic redis object class is not set")
 
+        return classes[0]
+
+    @property
+    def key(self) -> str:
         try:
-            return classes[0].key
+            return self.object_class.key
         except NameError:
             raise ValueError("Name attribute in generic redis object class is not set")
+
+    async def create(
+            self,
+            **kwargs: Any
+    ) -> T:
+        function: partial = self._prepare_function(
+            self.object_class.new,
+            controller=self,
+            **kwargs
+        )
+
+        value: T = function()
+        await value.save()
+
+        return value
 
     async def set(
             self,
@@ -135,3 +156,20 @@ class AbstractRedisController(Generic[T], ABC):
                 break
 
         return tuple(collected)
+
+    @staticmethod
+    def _prepare_function(
+            function: Callable[..., Callable],
+            **kwargs: Any
+    ) -> partial:
+        arg_spec: FullArgSpec = getfullargspec(function)
+
+        args: List[str] = arg_spec.args
+
+        if arg_spec.varkw is None:
+            kwargs = {
+                k: arg for k, arg in kwargs.items()
+                if k in args
+            }
+
+        return partial(function, **kwargs)

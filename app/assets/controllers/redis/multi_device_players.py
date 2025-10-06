@@ -1,11 +1,11 @@
 from typing import Dict, Any
 from uuid import UUID
 
-from app.assets.controllers.redis.abstract import AbstractRedisController
+from app.assets.controllers.redis.redis import RedisController
 from app.assets.objects.multi_device_active_player import MultiDeviceActivePlayer
 
 
-class MultiDevicePlayersController(AbstractRedisController):
+class MultiDevicePlayersController(RedisController):
     def key(
             self,
             player_id: UUID

@@ -10,11 +10,14 @@ from starlette.responses import JSONResponse
 
 from app.api.router import api_router
 from app.api.v1.exceptions.http import HTTPError
-from app.assets.controllers.redis.multi_device_games import MultiDeviceGamesController
+from app.assets.controllers.redis.redis import RedisController
 from app.assets.controllers.redis.secret_words import SecretWordsController
-from app.assets.controllers.redis.single_device_games import SingleDeviceGamesController
 from app.assets.controllers.s3.abstract import S3Config
 from app.assets.controllers.s3.qr_codes import QRCodesController
+from app.assets.objects.multi_device_active_player import MultiDeviceActivePlayer
+from app.assets.objects.multi_device_game import MultiDeviceGame
+from app.assets.objects.single_device_active_player import SingleDeviceActivePlayer
+from app.assets.objects.single_device_game import SingleDeviceGame
 from app.database.database import Database
 from app.logging import logger
 from config import Config
@@ -51,8 +54,10 @@ app.state.config = config
 app.state.database = database
 app.state.redis = redis
 app.state.secret_words = SecretWordsController(redis)
-app.state.single_device_games = SingleDeviceGamesController(redis)
-app.state.multi_device_games = MultiDeviceGamesController(redis)
+app.state.single_device_games = RedisController[SingleDeviceGame](redis)
+app.state.single_device_players = RedisController[SingleDeviceActivePlayer](redis)
+app.state.multi_device_games = RedisController[MultiDeviceGame](redis)
+app.state.multi_device_players = RedisController[MultiDeviceActivePlayer](redis)
 app.state.qr_codes = QRCodesController(s3_config)
 
 app.include_router(api_router)
