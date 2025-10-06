@@ -12,7 +12,7 @@ from app.api.v1.models.pagination import PaginatedResult, PaginationParams
 from app.api.v1.security.authenticator import Authenticator
 from app.api.v1.single_device_games.models import SingleDeviceGameModel, CreateSingleDeviceGameModel
 from app.assets.controllers.redis import RedisController
-from app.assets.controllers.redis.secret_words import SecretWordsController
+from app.assets.objects.secret_words_queue import SecretWordsQueue
 from app.assets.objects.single_device_active_player import SingleDeviceActivePlayer
 from app.assets.objects.single_device_game import SingleDeviceGame
 from app.database.models import User
@@ -44,7 +44,7 @@ async def create_single_device_game(
             Depends(single_device_players_dependency)
         ],
         secret_words_controller: Annotated[
-            SecretWordsController,
+            RedisController[SecretWordsQueue],
             Depends(secret_words_dependency)
         ]
 ) -> SingleDeviceGameModel:
@@ -54,7 +54,11 @@ async def create_single_device_game(
     if await players_controller.exists(game_model.user_id):
         raise AlreadyInGameError("You are already in game")
 
-    secret_word: str = await secret_words_controller.get_random_secret_word(game_model.user_id)
+    queue: SecretWordsQueue | None = await secret_words_controller.get(game_model.user_id)
+    if queue is None:
+        queue: SecretWordsQueue = await secret_words_controller.create(user_id=game_model.user_id)
+
+    secret_word: str = await queue.get_unique_word()
 
     game: SingleDeviceGame = await games_controller.create(
         user_id=game_model.user_id,

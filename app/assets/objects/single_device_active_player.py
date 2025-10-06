@@ -24,7 +24,7 @@ class SingleDeviceActivePlayer(AbstractRedisObject):
             game_id: UUID,
             user_id: UUID,
             *,
-            controller: RedisController['SingleDeviceActivePlayer'],
+            controller: RedisController['SingleDeviceActivePlayer']
     ) -> 'SingleDeviceActivePlayer':
         return cls(
             game_id=game_id,

@@ -19,11 +19,12 @@ from app.api.v1.multi_device_games.models import (
 )
 from app.api.v1.security.authenticator import Authenticator
 from app.assets.controllers.redis import RedisController
-from app.assets.controllers.redis.secret_words import SecretWordsController
+from app.assets.controllers.secret_words import SecretWordsController
 from app.assets.controllers.s3.qr_codes import QRCodesController
 from app.assets.objects.multi_device_active_player import MultiDeviceActivePlayer
 from app.assets.objects.multi_device_game import MultiDeviceGame
 from app.assets.objects.multi_device_player import MultiDevicePlayer
+from app.assets.objects.secret_words_queue import SecretWordsQueue
 from app.assets.parameters import Parameters
 from app.database.models import User
 from app.dependencies import multi_device_games_dependency, database_session, qr_codes_dependency, \
@@ -54,7 +55,7 @@ async def create_multi_device_game(
             Depends(multi_device_players_dependency)
         ],
         secret_words_controller: Annotated[
-            SecretWordsController,
+            RedisController[SecretWordsQueue],
             Depends(secret_words_dependency)
         ],
         qr_codes_controller: Annotated[
@@ -73,7 +74,11 @@ async def create_multi_device_game(
     if await players_controller.exists(game_model.host_id):
         raise AlreadyInGameError("You are already in game")
 
-    secret_word: str = await secret_words_controller.get_random_secret_word(game_model.host_id)
+    queue: SecretWordsQueue | None = await secret_words_controller.get(user.id)
+    if queue is None:
+        queue: SecretWordsQueue = await secret_words_controller.create(user_id=user.id)
+
+    secret_word: str = await queue.get_unique_word()
 
     game: MultiDeviceGame = await games_controller.create(
         host_id=user.id,

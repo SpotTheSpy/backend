@@ -35,7 +35,7 @@ class SingleDeviceGame(AbstractRedisObject):
             player_amount: int,
             secret_word: str,
             *,
-            controller: RedisController['SingleDeviceGame'],
+            controller: RedisController['SingleDeviceGame']
     ) -> 'SingleDeviceGame':
         return cls(
             user_id=user_id,

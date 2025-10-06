@@ -5,10 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
 from app.assets.controllers.redis import RedisController
-from app.assets.controllers.redis.secret_words import SecretWordsController
 from app.assets.controllers.s3.qr_codes import QRCodesController
 from app.assets.objects.multi_device_active_player import MultiDeviceActivePlayer
 from app.assets.objects.multi_device_game import MultiDeviceGame
+from app.assets.objects.secret_words_queue import SecretWordsQueue
 from app.assets.objects.single_device_active_player import SingleDeviceActivePlayer
 from app.assets.objects.single_device_game import SingleDeviceGame
 from app.database.database import Database
@@ -32,7 +32,7 @@ async def redis_dependency(request: Request) -> Redis:
     return request.app.state.redis
 
 
-async def secret_words_dependency(request: Request) -> SecretWordsController:
+async def secret_words_dependency(request: Request) -> RedisController[SecretWordsQueue]:
     return request.app.state.secret_words
 
 
