@@ -18,15 +18,16 @@ from app.api.v1.multi_device_games.models import (
     SetGameURLModel
 )
 from app.api.v1.security.authenticator import Authenticator
-from app.assets.controllers.redis.multi_device_games import MultiDeviceGamesController
+from app.assets.controllers.redis import RedisController
 from app.assets.controllers.redis.secret_words import SecretWordsController
 from app.assets.controllers.s3.qr_codes import QRCodesController
+from app.assets.objects.multi_device_active_player import MultiDeviceActivePlayer
 from app.assets.objects.multi_device_game import MultiDeviceGame
 from app.assets.objects.multi_device_player import MultiDevicePlayer
 from app.assets.parameters import Parameters
 from app.database.models import User
 from app.dependencies import multi_device_games_dependency, database_session, qr_codes_dependency, \
-    secret_words_dependency
+    secret_words_dependency, multi_device_players_dependency
 
 multi_device_games_router = APIRouter(prefix="/multi_device_games", tags=["Multi_device_games"])
 
@@ -40,10 +41,26 @@ multi_device_games_router = APIRouter(prefix="/multi_device_games", tags=["Multi
 )
 async def create_multi_device_game(
         game_model: CreateMultiDeviceGameModel,
-        session: Annotated[AsyncSession, Depends(database_session)],
-        secret_words_controller: Annotated[SecretWordsController, Depends(secret_words_dependency)],
-        games_controller: Annotated[MultiDeviceGamesController, Depends(multi_device_games_dependency)],
-        qr_codes_controller: Annotated[QRCodesController, Depends(qr_codes_dependency)]
+        session: Annotated[
+            AsyncSession,
+            Depends(database_session)
+        ],
+        games_controller: Annotated[
+            RedisController[MultiDeviceGame],
+            Depends(multi_device_games_dependency)
+        ],
+        players_controller: Annotated[
+            RedisController[MultiDeviceActivePlayer],
+            Depends(multi_device_players_dependency)
+        ],
+        secret_words_controller: Annotated[
+            SecretWordsController,
+            Depends(secret_words_dependency)
+        ],
+        qr_codes_controller: Annotated[
+            QRCodesController,
+            Depends(qr_codes_dependency)
+        ]
 ) -> MultiDeviceGameModel:
     user: User | None = await session.scalar(
         select(User)
@@ -53,18 +70,31 @@ async def create_multi_device_game(
     if user is None:
         raise NotFoundError("User with provided UUID was not found")
 
-    if await games_controller.players_controller.exists_player(game_model.host_id):
+    if await players_controller.exists(game_model.host_id):
         raise AlreadyInGameError("You are already in game")
 
     secret_word: str = await secret_words_controller.get_random_secret_word(game_model.host_id)
 
-    game: MultiDeviceGame = await games_controller.create_game(
-        user.id,
-        user.telegram_id,
-        user.first_name,
-        game_model.player_amount,
-        secret_word,
-        await qr_codes_controller.get_blurred_url()
+    game: MultiDeviceGame = await games_controller.create(
+        host_id=user.id,
+        player_amount=game_model.player_amount,
+        secret_word=secret_word,
+        qr_code_url=await qr_codes_controller.get_blurred_url()
+    )
+    game.players.add(
+        MultiDevicePlayer.new(
+            user_id=user.id,
+            telegram_id=user.telegram_id,
+            first_name=user.first_name,
+            game=game
+        )
+    )
+
+    await game.save()
+
+    await players_controller.create(
+        game_id=game.game_id,
+        user_id=user.id
     )
 
     return MultiDeviceGameModel.from_game(game)
@@ -79,11 +109,14 @@ async def create_multi_device_game(
 )
 async def get_multi_device_games(
         pagination: Annotated[PaginationParams, Depends()],
-        games_controller: Annotated[MultiDeviceGamesController, Depends(multi_device_games_dependency)]
+        games_controller: Annotated[
+            RedisController[MultiDeviceGame],
+            Depends(multi_device_games_dependency)
+        ]
 ) -> PaginatedResult[MultiDeviceGameModel]:
-    games: Tuple[MultiDeviceGame, ...] = await games_controller.get_games(
-        pagination.limit,
-        pagination.offset
+    games: Tuple[MultiDeviceGame, ...] = await games_controller.all(
+        limit=pagination.limit,
+        offset=pagination.offset
     )
 
     return pagination.create_response(
@@ -101,9 +134,12 @@ async def get_multi_device_games(
 )
 async def get_multi_device_game_by_uuid(
         game_id: UUID,
-        games_controller: Annotated[MultiDeviceGamesController, Depends(multi_device_games_dependency)]
+        games_controller: Annotated[
+            RedisController[MultiDeviceGame],
+            Depends(multi_device_games_dependency)
+        ]
 ) -> MultiDeviceGameModel:
-    game: MultiDeviceGame = await games_controller.get_game(game_id)
+    game: MultiDeviceGame = await games_controller.get(game_id)
 
     if game is None:
         raise NotFoundError("Game with provided UUID was not found")
@@ -120,9 +156,21 @@ async def get_multi_device_game_by_uuid(
 )
 async def get_multi_device_game_by_user_id(
         user_id: UUID,
-        games_controller: Annotated[MultiDeviceGamesController, Depends(multi_device_games_dependency)]
+        games_controller: Annotated[
+            RedisController[MultiDeviceGame],
+            Depends(multi_device_games_dependency)
+        ],
+        players_controller: Annotated[
+            RedisController[MultiDeviceActivePlayer],
+            Depends(multi_device_players_dependency)
+        ]
 ) -> MultiDeviceGameModel:
-    game: MultiDeviceGame = await games_controller.get_game_by_player(user_id)
+    player: MultiDeviceActivePlayer = await players_controller.get(user_id)
+
+    if player is None:
+        raise NotFoundError("User with provided UUID was not found")
+
+    game: MultiDeviceGame = await games_controller.get(player.game_id)
 
     if game is None:
         raise NotFoundError("Game with provided user ID was not found")
@@ -138,13 +186,28 @@ async def get_multi_device_game_by_user_id(
 )
 async def delete_multi_device_game_by_uuid(
         game_id: UUID,
-        games_controller: Annotated[MultiDeviceGamesController, Depends(multi_device_games_dependency)],
-        qr_codes_controller: Annotated[QRCodesController, Depends(qr_codes_dependency)]
+        games_controller: Annotated[
+            RedisController[MultiDeviceGame],
+            Depends(multi_device_games_dependency)
+        ],
+        players_controller: Annotated[
+            RedisController[MultiDeviceActivePlayer],
+            Depends(multi_device_players_dependency)
+        ],
+        qr_codes_controller: Annotated[
+            QRCodesController,
+            Depends(qr_codes_dependency)
+        ]
 ) -> None:
-    if not await games_controller.exists_game(game_id):
+    game: MultiDeviceGame = await games_controller.get(game_id)
+
+    if game is None:
         raise NotFoundError("Game with provided UUID was not found")
 
-    await games_controller.remove_game(game_id)
+    for player_id in game.players.ids:
+        await players_controller.remove(player_id)
+
+    await games_controller.remove(game_id)
     await qr_codes_controller.delete_qr_code(game_id)
 
 
@@ -159,7 +222,14 @@ async def join_game_by_uuid(
         game_id: UUID,
         user_id: UUID,
         session: Annotated[AsyncSession, Depends(database_session)],
-        games_controller: Annotated[MultiDeviceGamesController, Depends(multi_device_games_dependency)]
+        games_controller: Annotated[
+            RedisController[MultiDeviceGame],
+            Depends(multi_device_games_dependency)
+        ],
+        players_controller: Annotated[
+            RedisController[MultiDeviceActivePlayer],
+            Depends(multi_device_players_dependency)
+        ]
 ) -> MultiDeviceGameModel:
     user: User = await session.scalar(
         select(User)
@@ -169,7 +239,7 @@ async def join_game_by_uuid(
     if user is None:
         raise NotFoundError("User with provided UUID was not found")
 
-    game: MultiDeviceGame | None = await games_controller.get_game(game_id)
+    game: MultiDeviceGame | None = await games_controller.get(game_id)
 
     if game is None:
         raise NotFoundError("Game with provided UUID was not found")
@@ -191,9 +261,9 @@ async def join_game_by_uuid(
 
     await game.save()
 
-    await games_controller.players_controller.create_player(
-        user_id=user.id,
-        game_id=game.game_id
+    await players_controller.create(
+        game_id=game.game_id,
+        user_id=user.id
     )
 
     return MultiDeviceGameModel.from_game(game)
@@ -209,9 +279,16 @@ async def join_game_by_uuid(
 async def leave_game_by_uuid(
         game_id: UUID,
         user_id: UUID,
-        games_controller: Annotated[MultiDeviceGamesController, Depends(multi_device_games_dependency)]
+        games_controller: Annotated[
+            RedisController[MultiDeviceGame],
+            Depends(multi_device_games_dependency)
+        ],
+        players_controller: Annotated[
+            RedisController[MultiDeviceActivePlayer],
+            Depends(multi_device_players_dependency)
+        ]
 ) -> MultiDeviceGameModel:
-    game: MultiDeviceGame | None = await games_controller.get_game(game_id)
+    game: MultiDeviceGame | None = await games_controller.get(game_id)
 
     if game is None:
         raise NotFoundError("Game with provided UUID was not found")
@@ -220,10 +297,9 @@ async def leave_game_by_uuid(
     if not game.players.exists(user_id):
         raise NotInGameError("You are not in game")
 
+    await players_controller.remove(user_id)
     game.players.remove(user_id)
     await game.save()
-
-    await games_controller.players_controller.remove_player(user_id)
 
     return MultiDeviceGameModel.from_game(game)
 
@@ -237,9 +313,12 @@ async def leave_game_by_uuid(
 )
 async def start_game_by_uuid(
         game_id: UUID,
-        games_controller: Annotated[MultiDeviceGamesController, Depends(multi_device_games_dependency)]
+        games_controller: Annotated[
+            RedisController[MultiDeviceGame],
+            Depends(multi_device_games_dependency)
+        ]
 ) -> MultiDeviceGameModel:
-    game: MultiDeviceGame | None = await games_controller.get_game(game_id)
+    game: MultiDeviceGame | None = await games_controller.get(game_id)
 
     if game is None:
         raise NotFoundError("Game with provided UUID was not found")
@@ -264,10 +343,16 @@ async def start_game_by_uuid(
 async def set_game_url_by_uuid(
         game_id: UUID,
         url_model: SetGameURLModel,
-        games_controller: Annotated[MultiDeviceGamesController, Depends(multi_device_games_dependency)],
-        qr_codes_controller: Annotated[QRCodesController, Depends(qr_codes_dependency)]
+        games_controller: Annotated[
+            RedisController[MultiDeviceGame],
+            Depends(multi_device_games_dependency)
+        ],
+        qr_codes_controller: Annotated[
+            QRCodesController,
+            Depends(qr_codes_dependency)
+        ]
 ) -> MultiDeviceGameModel:
-    game: MultiDeviceGame = await games_controller.get_game(game_id)
+    game: MultiDeviceGame = await games_controller.get(game_id)
 
     if game is None:
         raise NotFoundError("Game with provided UUID was not found")

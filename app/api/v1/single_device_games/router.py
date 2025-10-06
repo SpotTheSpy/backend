@@ -11,7 +11,7 @@ from app.api.v1.exceptions.not_found import NotFoundError
 from app.api.v1.models.pagination import PaginatedResult, PaginationParams
 from app.api.v1.security.authenticator import Authenticator
 from app.api.v1.single_device_games.models import SingleDeviceGameModel, CreateSingleDeviceGameModel
-from app.assets.controllers.redis.redis import RedisController
+from app.assets.controllers.redis import RedisController
 from app.assets.controllers.redis.secret_words import SecretWordsController
 from app.assets.objects.single_device_active_player import SingleDeviceActivePlayer
 from app.assets.objects.single_device_game import SingleDeviceGame
@@ -60,6 +60,11 @@ async def create_single_device_game(
         user_id=game_model.user_id,
         player_amount=game_model.player_amount,
         secret_word=secret_word
+    )
+
+    await players_controller.create(
+        game_id=game.game_id,
+        user_id=game_model.user_id
     )
 
     return SingleDeviceGameModel.from_game(game)

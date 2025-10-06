@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 
 from pydantic.dataclasses import dataclass
 
-from app.assets.controllers.redis.redis import RedisController
+from app.assets.controllers.redis import RedisController
 from app.assets.objects.redis import AbstractRedisObject
 
 
@@ -35,7 +35,7 @@ class SingleDeviceGame(AbstractRedisObject):
             player_amount: int,
             secret_word: str,
             *,
-            controller: 'RedisController',
+            controller: RedisController['SingleDeviceGame'],
     ) -> 'SingleDeviceGame':
         return cls(
             user_id=user_id,
@@ -49,7 +49,7 @@ class SingleDeviceGame(AbstractRedisObject):
             cls,
             data: Dict[str, Any],
             *,
-            controller: RedisController
+            controller: RedisController['SingleDeviceGame']
     ) -> 'SingleDeviceGame':
         return cls(**data, _controller=controller)
 

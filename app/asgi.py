@@ -10,7 +10,7 @@ from starlette.responses import JSONResponse
 
 from app.api.router import api_router
 from app.api.v1.exceptions.http import HTTPError
-from app.assets.controllers.redis.redis import RedisController
+from app.assets.controllers.redis import RedisController
 from app.assets.controllers.redis.secret_words import SecretWordsController
 from app.assets.controllers.s3.abstract import S3Config
 from app.assets.controllers.s3.qr_codes import QRCodesController

@@ -4,7 +4,7 @@ from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
-from app.assets.controllers.redis.redis import RedisController
+from app.assets.controllers.redis import RedisController
 from app.assets.controllers.redis.secret_words import SecretWordsController
 from app.assets.controllers.s3.qr_codes import QRCodesController
 from app.assets.objects.multi_device_active_player import MultiDeviceActivePlayer

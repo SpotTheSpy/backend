@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import ClassVar, TYPE_CHECKING, Any
 
 from pydantic.dataclasses import dataclass
@@ -6,7 +6,7 @@ from pydantic.dataclasses import dataclass
 from app.assets.objects.abstract import AbstractObject
 
 if TYPE_CHECKING:
-    from app.assets.controllers.redis.redis import RedisController
+    from app.assets.controllers.redis import RedisController
 else:
     AbstractRedisController = Any
 

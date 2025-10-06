@@ -2,7 +2,7 @@ from random import choice
 from typing import List, Set
 from uuid import UUID
 
-from app.assets.controllers.redis.redis import RedisController
+from app.assets.controllers.redis import RedisController
 
 
 class SecretWordsController(RedisController):

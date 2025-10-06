@@ -1,24 +1,22 @@
-import asyncio
-from typing import Any, Dict, TYPE_CHECKING
+from typing import Any, Dict, ClassVar
 from uuid import UUID
 
 from pydantic.dataclasses import dataclass
 
+from app.assets.controllers.redis import RedisController
 from app.assets.objects.redis import AbstractRedisObject
-from app.workers.tasks import save_to_redis, clear_from_redis
-
-if TYPE_CHECKING:
-    from app.assets.controllers.redis.multi_device_players import MultiDevicePlayersController
-else:
-    MultiDevicePlayersController = Any
 
 
 @dataclass
 class MultiDeviceActivePlayer(AbstractRedisObject):
+    key: ClassVar[str] = "multi_device_player"
+
     game_id: UUID
     user_id: UUID
 
-    _controller: 'MultiDevicePlayersController'
+    @property
+    def primary_key(self) -> Any:
+        return self.user_id
 
     @classmethod
     def new(
@@ -26,7 +24,7 @@ class MultiDeviceActivePlayer(AbstractRedisObject):
             game_id: UUID,
             user_id: UUID,
             *,
-            controller: 'MultiDevicePlayersController'
+            controller: RedisController['MultiDeviceActivePlayer']
     ) -> 'MultiDeviceActivePlayer':
         return cls(
             game_id=game_id,
@@ -39,7 +37,7 @@ class MultiDeviceActivePlayer(AbstractRedisObject):
             cls,
             data: Dict[str, Any],
             *,
-            controller: 'MultiDevicePlayersController'
+            controller: RedisController['MultiDeviceActivePlayer']
     ) -> Any:
         return cls(**data, _controller=controller)
 
@@ -48,13 +46,3 @@ class MultiDeviceActivePlayer(AbstractRedisObject):
             "game_id": str(self.game_id),
             "user_id": str(self.user_id)
         }
-
-    async def save(self) -> None:
-        await asyncio.to_thread(save_to_redis.delay, self.controller.key(self.user_id), self.to_json())
-
-    async def clear(self) -> None:
-        await asyncio.to_thread(clear_from_redis.delay, self.controller.key(self.user_id))
-
-    @property
-    def controller(self) -> 'MultiDevicePlayersController':
-        return self._controller

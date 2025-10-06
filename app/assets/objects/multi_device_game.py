@@ -1,30 +1,24 @@
-import asyncio
 from dataclasses import field as dataclass_field
 from random import randint
-from typing import Dict, Any, TYPE_CHECKING, Optional, List
+from typing import Dict, Any, Optional, List, ClassVar
 from uuid import UUID, uuid4
 
 from pydantic.dataclasses import dataclass
 
 from app.assets.controllers.context.multi_device_players import MultiDevicePlayers
+from app.assets.controllers.redis import RedisController
 from app.assets.enums.player_role import PlayerRole
 from app.assets.objects.redis import AbstractRedisObject
-from app.workers.tasks import save_to_redis, clear_from_redis
-
-if TYPE_CHECKING:
-    from app.assets.controllers.redis.multi_device_games import MultiDeviceGamesController
-else:
-    MultiDeviceGamesController = Any
 
 
 @dataclass
 class MultiDeviceGame(AbstractRedisObject):
+    key: ClassVar[str] = "multi_device_game"
+
     host_id: UUID
     player_amount: int
     secret_word: str
     qr_code_url: str
-
-    _controller: 'MultiDeviceGamesController'
 
     game_id: UUID = dataclass_field(default_factory=uuid4)
     has_started: bool = False
@@ -34,6 +28,10 @@ class MultiDeviceGame(AbstractRedisObject):
     def __post_init__(self) -> None:
         self.players.init(None, game=self)
 
+    @property
+    def primary_key(self) -> Any:
+        return self.game_id
+
     @classmethod
     def new(
             cls,
@@ -42,7 +40,7 @@ class MultiDeviceGame(AbstractRedisObject):
             secret_word: str,
             qr_code_url: str,
             *,
-            controller: 'MultiDeviceGamesController',
+            controller: RedisController['MultiDeviceGame']
     ) -> 'MultiDeviceGame':
         return cls(
             host_id=host_id,
@@ -57,7 +55,7 @@ class MultiDeviceGame(AbstractRedisObject):
             cls,
             data: Dict[str, Any],
             *,
-            controller: 'MultiDeviceGamesController'
+            controller: RedisController['MultiDeviceGame']
     ) -> Optional['MultiDeviceGame']:
         try:
             host_id: UUID = UUID(data.pop("host_id"))
@@ -86,16 +84,6 @@ class MultiDeviceGame(AbstractRedisObject):
             "qr_code_url": self.qr_code_url,
             "players": self.players.to_json()
         }
-
-    async def save(self) -> None:
-        await asyncio.to_thread(save_to_redis.delay, self.controller.key(self.game_id), self.to_json())
-
-    async def clear(self) -> None:
-        await asyncio.to_thread(clear_from_redis.delay, self.controller.key(self.game_id))
-
-    @property
-    def controller(self) -> 'MultiDeviceGamesController':
-        return self._controller
 
     def start(self) -> None:
         self.has_started = True
