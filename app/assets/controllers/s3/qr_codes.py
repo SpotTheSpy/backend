@@ -1,5 +1,4 @@
 import asyncio
-from urllib.parse import urlparse, quote, urlunparse
 from uuid import UUID
 
 from celery.result import AsyncResult
