@@ -21,6 +21,10 @@ class MultiDevicePlayer(AbstractObject):
 
     role: PlayerRole | None = None
 
+    @property
+    def primary_key(self) -> Any:
+        return self.user_id
+
     @classmethod
     def new(
             cls,

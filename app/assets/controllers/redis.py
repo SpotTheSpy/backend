@@ -3,7 +3,7 @@ from abc import ABC
 from functools import partial
 from inspect import FullArgSpec, getfullargspec
 from json import dumps, loads
-from typing import Any, Tuple, List, Generic, TypeVar, Type, Callable
+from typing import Any, Tuple, List, Generic, TypeVar, Type, Callable, Dict
 
 from redis.asyncio import Redis
 
@@ -66,7 +66,8 @@ class RedisController(Generic[T], ABC):
             self,
             primary_key: Any
     ) -> T | None:
-        return T.from_json(await self._get(str(primary_key)))
+        value: Dict[str, Any] | None = await self._get(str(primary_key))
+        return None if value is None else self.object_class.from_json(value, controller=self)
 
     async def exists(
             self,
@@ -90,7 +91,7 @@ class RedisController(Generic[T], ABC):
         values: List[T] = []
 
         for key in await self._get_keys(limit=limit, offset=offset, count=count):
-            value = T.from_json(await self._get(key, exact_key=True))
+            value = self.object_class.from_json(await self._get(key, exact_key=True))
             if value is None:
                 continue
             values.append(value)
@@ -164,7 +165,7 @@ class RedisController(Generic[T], ABC):
     ) -> partial:
         arg_spec: FullArgSpec = getfullargspec(function)
 
-        args: List[str] = arg_spec.args
+        args: List[str] = arg_spec.args + arg_spec.kwonlyargs
 
         if arg_spec.varkw is None:
             kwargs = {

@@ -54,7 +54,7 @@ class SecretWordsQueue(AbstractRedisObject):
 
     def to_json(self) -> Dict[str, Any]:
         return {
-            "user_id": self.user_id,
+            "user_id": str(self.user_id),
             "secret_words": self.secret_words,
             "guaranteed_unique_count": self.guaranteed_unique_count
         }
