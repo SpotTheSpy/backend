@@ -4,7 +4,7 @@ from uuid import UUID
 from pydantic.dataclasses import dataclass
 
 from app.assets.enums.player_role import PlayerRole
-from app.assets.objects.base import BaseObject
+from app.assets.objects.abstract import AbstractObject
 
 if TYPE_CHECKING:
     from app.assets.objects.multi_device_game import MultiDeviceGame
@@ -13,7 +13,7 @@ else:
 
 
 @dataclass
-class MultiDevicePlayer(BaseObject):
+class MultiDevicePlayer(AbstractObject):
     user_id: UUID
     telegram_id: int
     first_name: str

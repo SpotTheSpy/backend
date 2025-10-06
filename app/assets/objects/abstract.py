@@ -6,7 +6,12 @@ from pydantic.dataclasses import dataclass
 
 
 @dataclass(config=ConfigDict(arbitrary_types_allowed=True))
-class BaseObject(ABC):
+class AbstractObject(ABC):
+    @property
+    @abstractmethod
+    def primary_key(self) -> Any:
+        pass
+
     @classmethod
     @abstractmethod
     def from_json(cls, *args, **kwargs) -> Any:

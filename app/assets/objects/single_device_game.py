@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 
 from pydantic.dataclasses import dataclass
 
-from app.assets.objects.redis import RedisObject
+from app.assets.objects.redis import AbstractRedisObject
 from app.workers.tasks import save_to_redis, clear_from_redis
 
 if TYPE_CHECKING:
@@ -16,7 +16,7 @@ else:
 
 
 @dataclass
-class SingleDeviceGame(RedisObject):
+class SingleDeviceGame(AbstractRedisObject):
     user_id: UUID
     player_amount: int
     secret_word: str

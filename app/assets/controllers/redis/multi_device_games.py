@@ -3,14 +3,14 @@ from uuid import UUID
 
 from redis.asyncio import Redis
 
-from app.assets.controllers.redis.abstract import RedisController
+from app.assets.controllers.redis.abstract import AbstractRedisController
 from app.assets.controllers.redis.multi_device_players import MultiDevicePlayersController
 from app.assets.objects.multi_device_active_player import MultiDeviceActivePlayer
 from app.assets.objects.multi_device_game import MultiDeviceGame
 from app.assets.objects.multi_device_player import MultiDevicePlayer
 
 
-class MultiDeviceGamesController(RedisController):
+class MultiDeviceGamesController(AbstractRedisController):
     def __init__(
             self,
             redis: Redis

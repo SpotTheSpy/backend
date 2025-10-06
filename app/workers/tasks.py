@@ -119,12 +119,12 @@ async def __async_save_to_redis(
         value: Any
 ) -> None:
     redis = Redis.from_url(config.redis_dsn.get_secret_value())
-    await redis.set(f"spotthespy:{key}", json.dumps(value))
+    await redis.set(key, value)
 
 
 async def __async_clear_from_redis(key: str) -> None:
     redis = Redis.from_url(config.redis_dsn.get_secret_value())
-    await redis.delete(f"spotthespy:{key}")
+    await redis.delete(key)
 
 
 async def __async_upload_to_s3(

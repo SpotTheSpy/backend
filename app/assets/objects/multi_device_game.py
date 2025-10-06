@@ -8,7 +8,7 @@ from pydantic.dataclasses import dataclass
 
 from app.assets.controllers.context.multi_device_players import MultiDevicePlayers
 from app.assets.enums.player_role import PlayerRole
-from app.assets.objects.redis import RedisObject
+from app.assets.objects.redis import AbstractRedisObject
 from app.workers.tasks import save_to_redis, clear_from_redis
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ else:
 
 
 @dataclass
-class MultiDeviceGame(RedisObject):
+class MultiDeviceGame(AbstractRedisObject):
     host_id: UUID
     player_amount: int
     secret_word: str
