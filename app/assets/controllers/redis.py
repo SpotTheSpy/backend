@@ -3,7 +3,7 @@ from abc import ABC
 from functools import partial
 from inspect import FullArgSpec, getfullargspec
 from json import dumps, loads
-from typing import Any, Tuple, List, Generic, TypeVar, Type, Callable, Awaitable
+from typing import Any, Tuple, List, Generic, TypeVar, Type, Callable
 
 from redis.asyncio import Redis
 

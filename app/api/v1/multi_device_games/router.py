@@ -19,7 +19,6 @@ from app.api.v1.multi_device_games.models import (
 )
 from app.api.v1.security.authenticator import Authenticator
 from app.assets.controllers.redis import RedisController
-from app.assets.controllers.secret_words import SecretWordsController
 from app.assets.controllers.s3.qr_codes import QRCodesController
 from app.assets.objects.multi_device_active_player import MultiDeviceActivePlayer
 from app.assets.objects.multi_device_game import MultiDeviceGame
