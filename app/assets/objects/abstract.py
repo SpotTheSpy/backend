@@ -21,13 +21,12 @@ class AbstractObject(BaseModel, ABC, arbitrary_types_allowed=True):
             data: Dict[str, Any],
             **kwargs: Any
     ) -> Optional['AbstractObject']:
+        data.update(kwargs)
+
         try:
-            return cls.model_validate(data, **kwargs)
+            return cls.model_validate(data)
         except ValidationError:
             pass
 
-    def to_json(
-            self,
-            **kwargs: Any
-    ) -> Dict[str, Any]:
-        return self.model_dump(mode="json", **kwargs)
+    def to_json(self) -> Dict[str, Any]:
+        return self.model_dump(mode="json")

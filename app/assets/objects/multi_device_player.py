@@ -61,12 +61,12 @@ class MultiDevicePlayer(AbstractObject):
             cls,
             data: Dict[str, Any],
             *,
-            game: Optional['MultiDeviceGame'] = None
+            game: Optional['MultiDeviceGame'] = None,
+            **kwargs: Any
     ) -> Optional['MultiDevicePlayer']:
-        try:
-            value = cls.model_validate(data)
-            value._game = game
+        data.update(kwargs)
 
-            return value
+        try:
+            return cls.from_json(data, _game=game)
         except ValidationError:
             pass

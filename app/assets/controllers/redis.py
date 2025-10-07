@@ -38,21 +38,6 @@ class RedisController(Generic[T]):
         except NameError:
             raise ValueError("Name attribute in generic redis object class is not set")
 
-    async def create(
-            self,
-            **kwargs: Any
-    ) -> T:
-        function: partial = self._prepare_function(
-            self.object_class.new,
-            controller=self,
-            **kwargs
-        )
-
-        value: T = function()
-        await value.save()
-
-        return value
-
     async def set(
             self,
             value: T
@@ -61,10 +46,16 @@ class RedisController(Generic[T]):
 
     async def get(
             self,
-            primary_key: Any
+            primary_key: Any,
+            **kwargs: Any
     ) -> T | None:
         value: Dict[str, Any] | None = await self._get(str(primary_key))
-        return None if value is None else self.object_class.from_json_and_controller(value, controller=self)
+
+        return None if value is None else self.object_class.from_json_and_controller(
+            value,
+            controller=self,
+            **kwargs
+        )
 
     async def exists(
             self,
@@ -83,14 +74,21 @@ class RedisController(Generic[T]):
             *,
             limit: int | None = None,
             offset: int | None = None,
-            count: int | None = None
+            count: int | None = None,
+            **kwargs: Any
     ) -> Tuple[T, ...]:
         values: List[T] = []
 
         for key in await self._get_keys(limit=limit, offset=offset, count=count):
-            value = self.object_class.from_json_and_controller(await self._get(key, exact_key=True), controller=self)
+            value = self.object_class.from_json_and_controller(
+                await self._get(key, exact_key=True),
+                controller=self,
+                **kwargs
+            )
+
             if value is None:
                 continue
+
             values.append(value)
 
         return tuple(values)

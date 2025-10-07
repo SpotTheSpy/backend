@@ -13,7 +13,7 @@ class SecretWordsQueue(AbstractRedisObject):
     _FILE_PATH: ClassVar[str] = "app/assets/data/secret_words.txt"
 
     with open(_FILE_PATH, "r", encoding="utf-8") as file:
-        _SECRET_WORDS: ClassVar[List[str]] = file.read().splitlines()
+        _SECRET_WORDS: ClassVar[Set[str]] = set(file.read().splitlines())
 
     key: ClassVar[str] = "secret_words"
 
@@ -42,12 +42,12 @@ class SecretWordsQueue(AbstractRedisObject):
         )
 
     async def get_unique_word(self) -> str:
-        available_words: Set[str] = set(self._SECRET_WORDS) - set(self.secret_words) or set(self._SECRET_WORDS)
-        word: str = choice(list(available_words))
-        self.secret_words.append(word)
+        available_words: Set[str] = self._SECRET_WORDS - set(self.secret_words) or self._SECRET_WORDS
 
+        word: str = choice(list(available_words))
+
+        self.secret_words.append(word)
         if len(self.secret_words) > self.guaranteed_unique_count:
             self.secret_words.pop(0)
 
-        await self.save()
         return word

@@ -14,7 +14,7 @@ else:
 class AbstractRedisObject(AbstractObject, ABC):
     key: ClassVar[str]
 
-    _controller: Optional['RedisController']
+    _controller: Optional['RedisController'] = None
 
     @property
     def controller(self) -> 'RedisController':
@@ -27,13 +27,13 @@ class AbstractRedisObject(AbstractObject, ABC):
             cls,
             data: Dict[str, Any],
             *,
-            controller: 'RedisController'
+            controller: 'RedisController',
+            **kwargs: Any
     ) -> Optional['AbstractRedisObject']:
-        try:
-            value = cls.model_validate(data)
-            value._controller = controller
+        data.update(kwargs)
 
-            return value
+        try:
+            return cls.from_json(data, _controller=controller)
         except ValidationError:
             pass
 

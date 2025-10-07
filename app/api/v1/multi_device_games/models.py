@@ -34,7 +34,7 @@ class MultiDeviceGameModel(BaseModel):
     has_started: bool
     player_amount: int = Field(ge=Parameters.MIN_PLAYER_AMOUNT, le=Parameters.MAX_PLAYER_AMOUNT)
     secret_word: str = Field(min_length=2, max_length=32)
-    qr_code_url: str = Field(min_length=16, default=None)
+    qr_code_url: str | None = Field(min_length=16, default=None)
     players: List[MultiDevicePlayerModel]
 
     @classmethod
