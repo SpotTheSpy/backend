@@ -30,12 +30,12 @@ class AbstractRedisObject(AbstractObject, ABC):
             controller: 'RedisController',
             **kwargs: Any
     ) -> Optional['AbstractRedisObject']:
-        data.update(kwargs)
+        value = cls.from_json(data, **kwargs)
 
-        try:
-            return cls.from_json(data, _controller=controller)
-        except ValidationError:
-            pass
+        if value is not None:
+            value._controller = controller
+
+        return value
 
     async def save(self) -> None:
         await self.controller.set(self)

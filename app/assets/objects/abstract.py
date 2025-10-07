@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Self
 
 from pydantic import BaseModel, ValidationError
 
@@ -20,7 +20,7 @@ class AbstractObject(BaseModel, ABC, arbitrary_types_allowed=True):
             cls,
             data: Dict[str, Any],
             **kwargs: Any
-    ) -> Optional['AbstractObject']:
+    ) -> Optional[Self]:
         data.update(kwargs)
 
         try:

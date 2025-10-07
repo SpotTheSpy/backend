@@ -23,8 +23,10 @@ class MultiDeviceActivePlayer(AbstractRedisObject):
             *,
             controller: RedisController['MultiDeviceActivePlayer']
     ) -> 'MultiDeviceActivePlayer':
-        return cls(
+        player = cls(
             game_id=game_id,
-            user_id=user_id,
-            _controller=controller
+            user_id=user_id
         )
+        player._controller = controller
+
+        return player

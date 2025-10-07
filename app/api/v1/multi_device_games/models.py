@@ -49,7 +49,7 @@ class MultiDeviceGameModel(BaseModel):
             player_amount=game.player_amount,
             secret_word=game.secret_word,
             qr_code_url=game.qr_code_url,
-            players=[MultiDevicePlayerModel.from_player(player) for player in game.players.list]
+            players=[MultiDevicePlayerModel.from_player(player) for player in game.players.values()]
         )
 
 

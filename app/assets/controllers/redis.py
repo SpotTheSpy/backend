@@ -47,11 +47,15 @@ class RedisController(Generic[T]):
     async def get(
             self,
             primary_key: Any,
+            from_json_method: Callable[..., T] | None = None,
             **kwargs: Any
     ) -> T | None:
         value: Dict[str, Any] | None = await self._get(str(primary_key))
 
-        return None if value is None else self.object_class.from_json_and_controller(
+        if from_json_method is None:
+            from_json_method = self.object_class.from_json_and_controller
+
+        return None if value is None else from_json_method(
             value,
             controller=self,
             **kwargs
@@ -75,12 +79,16 @@ class RedisController(Generic[T]):
             limit: int | None = None,
             offset: int | None = None,
             count: int | None = None,
+            from_json_method: Callable[..., T] | None = None,
             **kwargs: Any
     ) -> Tuple[T, ...]:
         values: List[T] = []
 
+        if from_json_method is None:
+            from_json_method = self.object_class.from_json_and_controller
+
         for key in await self._get_keys(limit=limit, offset=offset, count=count):
-            value = self.object_class.from_json_and_controller(
+            value = from_json_method(
                 await self._get(key, exact_key=True),
                 controller=self,
                 **kwargs

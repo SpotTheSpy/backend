@@ -8,22 +8,17 @@ from app.assets.controllers.redis import RedisController
 from app.assets.objects.redis import AbstractRedisObject
 from app.assets.parameters import Parameters
 
+with open("app/assets/data/secret_words.txt", "r", encoding="utf-8") as file:
+    _SECRET_WORDS: Set[str] = set(file.read().splitlines())
+
 
 class SecretWordsQueue(AbstractRedisObject):
-    _FILE_PATH: ClassVar[str] = "app/assets/data/secret_words.txt"
-
-    with open(_FILE_PATH, "r", encoding="utf-8") as file:
-        _SECRET_WORDS: ClassVar[Set[str]] = set(file.read().splitlines())
-
     key: ClassVar[str] = "secret_words"
+    _SECRET_WORDS: ClassVar[Set[str]] = _SECRET_WORDS
 
     user_id: UUID
     secret_words: List[str] = Field(default_factory=list)
-    guaranteed_unique_count: int | None = None
-
-    def __post_init__(self) -> None:
-        if self.guaranteed_unique_count is None:
-            self.guaranteed_unique_count = Parameters.GUARANTEED_UNIQUE_WORDS_COUNT
+    guaranteed_unique_count: int = Parameters.GUARANTEED_UNIQUE_WORDS_COUNT
 
     @property
     def primary_key(self) -> Any:
@@ -36,10 +31,10 @@ class SecretWordsQueue(AbstractRedisObject):
             *,
             controller: RedisController['SecretWordsQueue']
     ) -> 'SecretWordsQueue':
-        return cls(
-            user_id=user_id,
-            _controller=controller
-        )
+        queue = cls(user_id=user_id)
+        queue._controller = controller
+
+        return queue
 
     async def get_unique_word(self) -> str:
         available_words: Set[str] = self._SECRET_WORDS - set(self.secret_words) or self._SECRET_WORDS

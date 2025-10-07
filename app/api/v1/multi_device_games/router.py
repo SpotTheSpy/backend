@@ -93,7 +93,8 @@ async def get_multi_device_games(
     games: Tuple[MultiDeviceGame, ...] = await games_controller.all(
         limit=pagination.limit,
         offset=pagination.offset,
-        _players_controller=players_controller
+        players_controller=players_controller,
+        from_json_method=MultiDeviceGame.from_json_and_controllers
     )
 
     return pagination.create_response(
@@ -122,7 +123,8 @@ async def get_multi_device_game_by_uuid(
 ) -> MultiDeviceGameModel:
     game: MultiDeviceGame | None = await games_controller.get(
         game_id,
-        _players_controller=players_controller
+        players_controller=players_controller,
+        from_json_method=MultiDeviceGame.from_json_and_controllers
     )
 
     if game is None:
@@ -156,7 +158,8 @@ async def get_multi_device_game_by_user_id(
 
     game: MultiDeviceGame | None = await games_controller.get(
         player.game_id,
-        _players_controller=players_controller
+        players_controller=players_controller,
+        from_json_method=MultiDeviceGame.from_json_and_controllers
     )
 
     if game is None:
@@ -188,7 +191,8 @@ async def delete_multi_device_game_by_uuid(
 ) -> None:
     game: MultiDeviceGame | None = await games_controller.get(
         game_id,
-        _players_controller=players_controller
+        players_controller=players_controller,
+        from_json_method=MultiDeviceGame.from_json_and_controllers
     )
 
     if game is None:
@@ -229,7 +233,8 @@ async def join_game_by_uuid(
 
     game: MultiDeviceGame | None = await games_controller.get(
         game_id,
-        _players_controller=players_controller
+        players_controller=players_controller,
+        from_json_method=MultiDeviceGame.from_json_and_controllers
     )
 
     if game is None:
@@ -265,7 +270,8 @@ async def leave_game_by_uuid(
 ) -> MultiDeviceGameModel:
     game: MultiDeviceGame | None = await games_controller.get(
         game_id,
-        _players_controller=players_controller
+        players_controller=players_controller,
+        from_json_method=MultiDeviceGame.from_json_and_controllers
     )
 
     if game is None:
@@ -296,7 +302,8 @@ async def start_game_by_uuid(
 ) -> MultiDeviceGameModel:
     game: MultiDeviceGame | None = await games_controller.get(
         game_id,
-        _players_controller=players_controller
+        players_controller=players_controller,
+        from_json_method=MultiDeviceGame.from_json_and_controllers
     )
 
     if game is None:
@@ -331,7 +338,8 @@ async def restart_game_by_uuid(
 ) -> MultiDeviceGameModel:
     game: MultiDeviceGame | None = await games_controller.get(
         game_id,
-        _players_controller=players_controller
+        players_controller=players_controller,
+        from_json_method=MultiDeviceGame.from_json_and_controllers
     )
 
     if game is None:

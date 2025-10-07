@@ -1,6 +1,6 @@
 from base64 import urlsafe_b64encode
 from random import randint
-from typing import Any, ClassVar, Dict, List
+from typing import Any, ClassVar, Dict, List, Self
 from uuid import UUID, uuid4
 
 from pydantic import Field, field_validator, field_serializer
@@ -34,15 +34,11 @@ class MultiDeviceGame(AbstractRedisObject):
 
     players: Dict[UUID, MultiDevicePlayer] = Field(default_factory=dict)
 
-    def __post_init__(self) -> None:
-        for player in self.players.values():
-            player.game = self
-
     @field_validator("players", mode="before")
     def validate_players(cls, data: List[Dict[str, Any]]) -> Dict[UUID, MultiDevicePlayer]:
         return {
             player.user_id: player
-            for player in map(MultiDevicePlayer.from_json_and_game, data)
+            for player in map(MultiDevicePlayer.from_json, data)
             if player is not None
         }
 
@@ -77,15 +73,36 @@ class MultiDeviceGame(AbstractRedisObject):
             secret_word: str,
             qr_code_url: str | None = None,
             *,
-            controller: RedisController['MultiDeviceGame']
+            controller: RedisController['MultiDeviceGame'],
+            players_controller: RedisController[MultiDeviceActivePlayer]
     ) -> 'MultiDeviceGame':
-        return cls(
+        game = cls(
             host_id=host_id,
             player_amount=player_amount,
             secret_word=secret_word,
-            qr_code_url=qr_code_url,
-            _controller=controller
+            qr_code_url=qr_code_url
         )
+        game._controller = controller
+        game._players_controller = players_controller
+
+        return game
+
+    @classmethod
+    def from_json_and_controllers(
+            cls,
+            data: Dict[str, Any],
+            *,
+            controller: RedisController[Self],
+            players_controller: RedisController[MultiDeviceActivePlayer],
+            **kwargs
+    ) -> Self:
+        value = cls.from_json(data, **kwargs)
+
+        if value is not None:
+            value._controller = controller
+            value._players_controller = players_controller
+
+        return value
 
     @classmethod
     async def host(
@@ -115,7 +132,8 @@ class MultiDeviceGame(AbstractRedisObject):
             host_id=host_id,
             player_amount=player_amount,
             secret_word=secret_word,
-            controller=games_controller
+            controller=games_controller,
+            players_controller=players_controller
         )
 
         if players is not None:
@@ -124,18 +142,18 @@ class MultiDeviceGame(AbstractRedisObject):
         game.players[host_id] = MultiDevicePlayer.new(
             user_id=host_id,
             telegram_id=telegram_id,
-            first_name=first_name,
-            game=game
-        )
-
-        player = MultiDeviceActivePlayer.new(
-            game_id=game.game_id,
-            user_id=host_id,
-            controller=players_controller
+            first_name=first_name
         )
 
         await game.save()
-        await player.save()
+
+        for player in game.players.values():
+            await MultiDeviceActivePlayer.new(
+                game_id=game.game_id,
+                user_id=player.user_id,
+                controller=players_controller
+            ).save()
+
         await queue.save()
 
         return game
@@ -184,8 +202,7 @@ class MultiDeviceGame(AbstractRedisObject):
         self.players[user_id] = MultiDevicePlayer.new(
             user_id=user_id,
             telegram_id=telegram_id,
-            first_name=first_name,
-            game=self
+            first_name=first_name
         )
 
         player = MultiDeviceActivePlayer.new(
