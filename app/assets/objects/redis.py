@@ -1,12 +1,12 @@
 from abc import ABC
-from typing import ClassVar, TYPE_CHECKING, Any, Dict, Optional
+from typing import ClassVar, TYPE_CHECKING, Any, Dict, Optional, Self
 
 from app.assets.objects.abstract import AbstractObject
 
 if TYPE_CHECKING:
     from app.assets.controllers.redis import RedisController
 else:
-    AbstractRedisController = Any
+    RedisController = Any
 
 
 class AbstractRedisObject(AbstractObject, ABC):
@@ -27,7 +27,7 @@ class AbstractRedisObject(AbstractObject, ABC):
             *,
             controller: 'RedisController',
             **kwargs: Any
-    ) -> Optional['AbstractRedisObject']:
+    ) -> Self | None:
         value = cls.from_json(data, **kwargs)
 
         if value is not None:

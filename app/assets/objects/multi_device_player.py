@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Self
 from uuid import UUID
 
 from app.assets.enums.player_role import PlayerRole
@@ -21,7 +21,7 @@ class MultiDevicePlayer(AbstractObject):
             user_id: UUID,
             telegram_id: int,
             first_name: str
-    ) -> 'MultiDevicePlayer':
+    ) -> Self:
         return cls(
             user_id=user_id,
             telegram_id=telegram_id,

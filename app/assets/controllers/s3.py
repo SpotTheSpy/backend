@@ -128,7 +128,7 @@ class S3Controller(Generic[T], AbstractController):
             try:
                 url: str = await client.generate_presigned_url(
                     "get_object",
-                    Params={'Bucket': bucket, "Key": key},
+                    Params={"Bucket": bucket, "Key": key},
                     ExpiresIn=expire
                 )
             except ClientError:

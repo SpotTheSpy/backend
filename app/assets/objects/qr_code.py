@@ -1,4 +1,4 @@
-from typing import Any, ClassVar, Self
+from typing import ClassVar, Self
 
 from app.assets.objects.s3 import AbstractS3Object
 

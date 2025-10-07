@@ -1,5 +1,5 @@
 from random import randint
-from typing import ClassVar
+from typing import ClassVar, Self
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -33,8 +33,8 @@ class SingleDeviceGame(AbstractRedisObject):
             player_amount: int,
             secret_word: str,
             *,
-            controller: RedisController['SingleDeviceGame']
-    ) -> 'SingleDeviceGame':
+            controller: RedisController[Self]
+    ) -> Self:
         game = cls(
             user_id=user_id,
             player_amount=player_amount,

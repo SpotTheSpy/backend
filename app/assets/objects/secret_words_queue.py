@@ -1,5 +1,5 @@
 from random import choice
-from typing import Any, ClassVar, List, Set
+from typing import Any, ClassVar, List, Set, Self
 from uuid import UUID
 
 from pydantic import Field
@@ -29,8 +29,8 @@ class SecretWordsQueue(AbstractRedisObject):
             cls,
             user_id: UUID,
             *,
-            controller: RedisController['SecretWordsQueue']
-    ) -> 'SecretWordsQueue':
+            controller: RedisController[Self]
+    ) -> Self | None:
         queue = cls(user_id=user_id)
         queue._controller = controller
 

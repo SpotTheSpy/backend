@@ -1,3 +1,5 @@
+from typing import Self
+
 from pydantic import ConfigDict
 from pydantic.dataclasses import dataclass
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, AsyncSession, create_async_engine
@@ -12,7 +14,7 @@ class Database:
     def from_dsn(
             cls,
             dsn: str
-    ) -> 'Database':
+    ) -> Self:
         engine = create_async_engine(
             dsn,
             pool_size=10,

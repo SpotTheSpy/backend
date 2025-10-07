@@ -79,9 +79,9 @@ class MultiDeviceGame(AbstractRedisObject):
             secret_word: str,
             qr_code_url: str | None = None,
             *,
-            controller: RedisController['MultiDeviceGame'],
+            controller: RedisController[Self],
             players_controller: RedisController[MultiDeviceActivePlayer]
-    ) -> 'MultiDeviceGame':
+    ) -> Self:
         game = cls(
             host_id=host_id,
             player_amount=player_amount,
@@ -118,11 +118,11 @@ class MultiDeviceGame(AbstractRedisObject):
             first_name: str,
             player_amount: int,
             *,
-            games_controller: RedisController['MultiDeviceGame'],
+            games_controller: RedisController[Self],
             players_controller: RedisController[MultiDeviceActivePlayer],
             secret_words_controller: RedisController[SecretWordsQueue],
             players: Dict[UUID, MultiDevicePlayer] | None = None
-    ) -> 'MultiDeviceGame':
+    ) -> Self:
         if await players_controller.exists(host_id):
             raise AlreadyInGameError("You are already in game")
 
@@ -173,10 +173,10 @@ class MultiDeviceGame(AbstractRedisObject):
     @classmethod
     async def rehost(
             cls,
-            game: 'MultiDeviceGame',
+            game: Self,
             *,
             secret_words_controller: RedisController[SecretWordsQueue]
-    ) -> 'MultiDeviceGame':
+    ) -> Self:
         await game.unhost()
 
         host: MultiDevicePlayer = game.players.get(game.host_id)

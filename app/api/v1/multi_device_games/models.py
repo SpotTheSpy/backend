@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Self
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -19,7 +19,7 @@ class MultiDevicePlayerModel(BaseModel):
     def from_player(
             cls,
             player: MultiDevicePlayer
-    ) -> 'MultiDevicePlayerModel':
+    ) -> Self:
         return cls(
             user_id=player.user_id,
             telegram_id=player.telegram_id,
@@ -41,7 +41,7 @@ class MultiDeviceGameModel(BaseModel):
     def from_game(
             cls,
             game: MultiDeviceGame
-    ) -> 'MultiDeviceGameModel':
+    ) -> Self:
         return cls(
             game_id=game.game_id,
             host_id=game.host_id,

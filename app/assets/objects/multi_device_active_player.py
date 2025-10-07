@@ -1,4 +1,4 @@
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Self
 from uuid import UUID
 
 from app.assets.controllers.redis import RedisController
@@ -21,8 +21,8 @@ class MultiDeviceActivePlayer(AbstractRedisObject):
             game_id: UUID,
             user_id: UUID,
             *,
-            controller: RedisController['MultiDeviceActivePlayer']
-    ) -> 'MultiDeviceActivePlayer':
+            controller: RedisController[Self]
+    ) -> Self:
         player = cls(
             game_id=game_id,
             user_id=user_id

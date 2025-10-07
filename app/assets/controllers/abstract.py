@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import Type, TypeVar, Any
+from typing import Type, TypeVar, Any, Generic
 
 from app.assets.objects.abstract import AbstractObject
 
 T = TypeVar('T', bound=AbstractObject)
 
 
-class AbstractController(ABC):
+class AbstractController(Generic[T], ABC):
     @abstractmethod
     async def set(
             self,
