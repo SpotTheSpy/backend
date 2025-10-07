@@ -1,17 +1,18 @@
 from functools import partial
 from inspect import FullArgSpec, getfullargspec
 from json import dumps, loads
-from typing import Any, Tuple, List, Generic, TypeVar, Type, Callable, Dict
+from typing import Any, Tuple, List, TypeVar, Callable, Dict, Generic
 
 from redis.asyncio import Redis
 
+from app.assets.controllers.abstract import AbstractController
 from app.assets.objects.redis import AbstractRedisObject
 from app.assets.parameters import Parameters
 
 T = TypeVar('T', bound=AbstractRedisObject)
 
 
-class RedisController(Generic[T]):
+class RedisController(Generic[T], AbstractController):
     def __init__(
             self,
             redis: Redis,
@@ -22,21 +23,11 @@ class RedisController(Generic[T]):
         self._default_key: str = default_key or Parameters.DEFAULT_REDIS_KEY
 
     @property
-    def object_class(self) -> Type[T]:
-        if not hasattr(self, "__orig_class__"):
-            raise ValueError("Generic redis object class is not set")
-        classes = getattr(self, "__orig_class__").__args__
-        if not classes:
-            raise ValueError("Generic redis object class is not set")
-
-        return classes[0]
-
-    @property
     def key(self) -> str:
         try:
             return self.object_class.key
         except NameError:
-            raise ValueError("Name attribute in generic redis object class is not set")
+            raise ValueError("Key attribute in generic redis object class is not set")
 
     async def set(
             self,

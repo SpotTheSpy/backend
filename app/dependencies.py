@@ -5,9 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
 from app.assets.controllers.redis import RedisController
-from app.assets.controllers.s3.qr_codes import QRCodesController
+from app.assets.controllers.s3 import S3Controller
 from app.assets.objects.multi_device_active_player import MultiDeviceActivePlayer
 from app.assets.objects.multi_device_game import MultiDeviceGame
+from app.assets.objects.qr_code import QRCode
 from app.assets.objects.secret_words_queue import SecretWordsQueue
 from app.assets.objects.single_device_active_player import SingleDeviceActivePlayer
 from app.assets.objects.single_device_game import SingleDeviceGame
@@ -52,5 +53,5 @@ async def multi_device_players_dependency(request: Request) -> RedisController[M
     return request.app.state.multi_device_players
 
 
-async def qr_codes_dependency(request: Request) -> QRCodesController:
+async def qr_codes_dependency(request: Request) -> S3Controller[QRCode]:
     return request.app.state.qr_codes

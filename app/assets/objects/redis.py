@@ -1,8 +1,6 @@
 from abc import ABC
 from typing import ClassVar, TYPE_CHECKING, Any, Dict, Optional
 
-from pydantic import ValidationError
-
 from app.assets.objects.abstract import AbstractObject
 
 if TYPE_CHECKING:

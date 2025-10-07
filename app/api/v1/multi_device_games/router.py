@@ -14,13 +14,14 @@ from app.api.v1.multi_device_games.models import (
 )
 from app.api.v1.security.authenticator import Authenticator
 from app.assets.controllers.redis import RedisController
-from app.assets.controllers.s3.qr_codes import QRCodesController
+from app.assets.controllers.s3 import S3Controller
 from app.assets.objects.multi_device_active_player import MultiDeviceActivePlayer
 from app.assets.objects.multi_device_game import MultiDeviceGame
+from app.assets.objects.qr_code import QRCode
 from app.assets.objects.secret_words_queue import SecretWordsQueue
 from app.database.models import User
-from app.dependencies import multi_device_games_dependency, database_session, qr_codes_dependency, \
-    secret_words_dependency, multi_device_players_dependency
+from app.dependencies import multi_device_games_dependency, database_session, secret_words_dependency, \
+    multi_device_players_dependency, qr_codes_dependency
 
 multi_device_games_router = APIRouter(prefix="/multi_device_games", tags=["Multi_device_games"])
 
@@ -183,10 +184,6 @@ async def delete_multi_device_game_by_uuid(
         players_controller: Annotated[
             RedisController[MultiDeviceActivePlayer],
             Depends(multi_device_players_dependency)
-        ],
-        qr_codes_controller: Annotated[
-            QRCodesController,
-            Depends(qr_codes_dependency)
         ]
 ) -> None:
     game: MultiDeviceGame | None = await games_controller.get(
@@ -199,8 +196,6 @@ async def delete_multi_device_game_by_uuid(
         raise NotFoundError("Game with provided UUID was not found")
 
     await game.unhost()
-
-    await qr_codes_controller.delete_qr_code(game_id)
 
 
 @multi_device_games_router.post(
@@ -349,5 +344,41 @@ async def restart_game_by_uuid(
         game,
         secret_words_controller=secret_words_controller
     )
+
+    return MultiDeviceGameModel.from_game(game)
+
+
+@multi_device_games_router.post(
+    "/{game_id}/qr_code",
+    status_code=status.HTTP_201_CREATED,
+    response_model=MultiDeviceGameModel,
+    dependencies=[Authenticator.verify_api_key()],
+    description="Generate game QR code by UUID"
+)
+async def generate_qr_code_by_uuid(
+        game_id: UUID,
+        games_controller: Annotated[
+            RedisController[MultiDeviceGame],
+            Depends(multi_device_games_dependency)
+        ],
+        players_controller: Annotated[
+            RedisController[MultiDeviceActivePlayer],
+            Depends(multi_device_players_dependency)
+        ],
+        qr_codes_controller: Annotated[
+            S3Controller[QRCode],
+            Depends(qr_codes_dependency)
+        ]
+) -> MultiDeviceGameModel:
+    game: MultiDeviceGame | None = await games_controller.get(
+        game_id,
+        players_controller=players_controller,
+        from_json_method=MultiDeviceGame.from_json_and_controllers
+    )
+
+    if game is None:
+        raise NotFoundError("Game with provided UUID was not found")
+
+    await game.generate_qr_code(qr_codes_controller=qr_codes_controller)
 
     return MultiDeviceGameModel.from_game(game)

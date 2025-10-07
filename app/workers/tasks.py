@@ -89,7 +89,7 @@ class QRCodeGenerator:
 
 
 @worker.task()
-def generate_qr_code(
+def generate_qr_code_task(
         url: str,
         *,
         fill_color: str | None = None,

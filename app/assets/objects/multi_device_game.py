@@ -1,22 +1,28 @@
+import asyncio
 from base64 import urlsafe_b64encode
 from random import randint
 from typing import Any, ClassVar, Dict, List, Self
 from uuid import UUID, uuid4
 
+from celery.result import AsyncResult
 from pydantic import Field, field_validator, field_serializer
 
+from app.api.v1.exceptions.already_exists import AlreadyExistsError
 from app.api.v1.exceptions.already_in_game import AlreadyInGameError
 from app.api.v1.exceptions.game_has_already_started import GameHasAlreadyStartedError
 from app.api.v1.exceptions.invalid_player_amount import InvalidPlayerAmountError
 from app.api.v1.exceptions.not_in_game import NotInGameError
 from app.assets.controllers.redis import RedisController
+from app.assets.controllers.s3 import S3Controller
 from app.assets.enums.payload_type import PayloadType
 from app.assets.enums.player_role import PlayerRole
 from app.assets.objects.multi_device_active_player import MultiDeviceActivePlayer
 from app.assets.objects.multi_device_player import MultiDevicePlayer
+from app.assets.objects.qr_code import QRCode
 from app.assets.objects.redis import AbstractRedisObject
 from app.assets.objects.secret_words_queue import SecretWordsQueue
 from app.assets.parameters import Parameters
+from app.workers.tasks import generate_qr_code_task
 
 
 class MultiDeviceGame(AbstractRedisObject):
@@ -60,7 +66,7 @@ class MultiDeviceGame(AbstractRedisObject):
         return self._players_controller
 
     @property
-    def join_link(self) -> str:
+    def join_url(self) -> str:
         payload: str = f"{PayloadType.JOIN}:{self.game_id}"
         encoded_payload: str = urlsafe_b64encode(payload.encode("utf-8")).decode("utf-8").replace("=", "")
         return Parameters.TELEGRAM_BOT_START_URL.format(payload=encoded_payload)
@@ -240,5 +246,25 @@ class MultiDeviceGame(AbstractRedisObject):
                 player.role = PlayerRole.SPY
             else:
                 player.role = PlayerRole.CITIZEN
+
+        await self.save()
+
+    async def generate_qr_code(
+            self,
+            *,
+            qr_codes_controller: S3Controller[QRCode]
+    ) -> None:
+        if await qr_codes_controller.exists(f"{self.game_id}.jpg"):
+            raise AlreadyExistsError(f"QR code with provided game ID already exists")
+
+        task: AsyncResult = await asyncio.to_thread(generate_qr_code_task.delay, self.join_url)
+        qr_code = QRCode.new(
+            str(self.game_id),
+            "jpg",
+            await asyncio.to_thread(task.get, timeout=10, **{})
+        )
+
+        await qr_codes_controller.set(qr_code)
+        self.qr_code_url = await qr_codes_controller.url(qr_code.primary_key)
 
         await self.save()
