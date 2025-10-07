@@ -1,4 +1,4 @@
-from typing import Any, Dict, ClassVar
+from typing import Any, ClassVar
 from uuid import UUID
 
 from app.assets.controllers.redis import RedisController

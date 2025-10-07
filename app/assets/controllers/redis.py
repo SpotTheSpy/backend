@@ -1,4 +1,3 @@
-import asyncio
 from functools import partial
 from inspect import FullArgSpec, getfullargspec
 from json import dumps, loads
@@ -8,7 +7,6 @@ from redis.asyncio import Redis
 
 from app.assets.objects.redis import AbstractRedisObject
 from app.assets.parameters import Parameters
-from app.workers.tasks import save_to_redis, clear_from_redis
 
 T = TypeVar('T', bound=AbstractRedisObject)
 
