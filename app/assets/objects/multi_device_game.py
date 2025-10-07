@@ -1,3 +1,4 @@
+from base64 import urlsafe_b64encode
 from random import randint
 from typing import Any, ClassVar, Dict, List
 from uuid import UUID, uuid4
@@ -5,9 +6,11 @@ from uuid import UUID, uuid4
 from pydantic import Field, field_validator, field_serializer
 
 from app.assets.controllers.redis import RedisController
+from app.assets.enums.payload_type import PayloadType
 from app.assets.enums.player_role import PlayerRole
 from app.assets.objects.multi_device_player import MultiDevicePlayer
 from app.assets.objects.redis import AbstractRedisObject
+from app.assets.parameters import Parameters
 
 
 class MultiDeviceGame(AbstractRedisObject):
@@ -41,6 +44,12 @@ class MultiDeviceGame(AbstractRedisObject):
     @property
     def primary_key(self) -> Any:
         return self.game_id
+
+    @property
+    def join_link(self) -> str:
+        payload: str = f"{PayloadType.JOIN}:{self.game_id}"
+        encoded_payload: str = urlsafe_b64encode(payload.encode("utf-8")).decode("utf-8").replace("=", "")
+        return Parameters.TELEGRAM_BOT_START_URL.format(payload=encoded_payload)
 
     @classmethod
     def new(
