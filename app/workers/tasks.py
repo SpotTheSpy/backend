@@ -1,57 +1,32 @@
-import asyncio
-from contextlib import asynccontextmanager
 from io import BytesIO
-from typing import Any, AsyncGenerator, Tuple
+from typing import Tuple
 
 from PIL import Image, ImageOps
 from PIL.ImageDraw import Draw
-from aiobotocore.client import AioBaseClient
-from aiobotocore.session import get_session
-from botocore.exceptions import ClientError
-from redis.asyncio import Redis
-from redis.exceptions import ConnectionError, TimeoutError
 from segno import QRCode, make
 
-from app.workers.worker import worker, config
-
-
-@asynccontextmanager
-async def __get_client() -> AsyncGenerator[AioBaseClient, None]:
-    session = get_session()
-    async with session.create_client(
-            "s3",
-            endpoint_url=config.s3_dsn.get_secret_value(),
-            region_name=config.s3_region,
-            aws_access_key_id=config.s3_username.get_secret_value(),
-            aws_secret_access_key=config.s3_password.get_secret_value()
-    ) as client:
-        yield client
+from app.workers.worker import worker
 
 
 class QRCodeGenerator:
     def __init__(
             self,
-            fill_color: str,
-            back_color: str,
-            pixel_size: int = 14,
-            radius: int = 6,
-            border: int = 16,
-            error: str = "Q"
+            *,
+            fill_color: str | None = None,
+            back_color: str | None = None,
+            pixel_size: int | None = None,
+            radius: int | None = None,
+            border: int | None = None,
+            error: str | None = None
     ) -> None:
-        self.fill_color = fill_color
-        self.back_color = back_color
-        self.pixel_size = pixel_size
-        self.radius = radius
-        self.border = border
-        self.error = error
+        self.fill_color = fill_color or "#050B10"
+        self.back_color = back_color or "#F0F0F0"
+        self.pixel_size = pixel_size or 14
+        self.radius = radius or 6
+        self.border = border or 16
+        self.error = error or "Q"
 
-    async def generate(
-            self,
-            url: str
-    ) -> bytes:
-        return await asyncio.to_thread(self._generate, url)
-
-    def _generate(
+    def generate(
             self,
             url: str
     ) -> bytes:
@@ -113,84 +88,24 @@ class QRCodeGenerator:
         return matrix[y][x]
 
 
-async def __async_save_to_redis(
-        key: str,
-        value: Any
-) -> None:
-    redis = Redis.from_url(config.redis_dsn.get_secret_value())
-    await redis.set(key, value)
-
-
-async def __async_clear_from_redis(key: str) -> None:
-    redis = Redis.from_url(config.redis_dsn.get_secret_value())
-    await redis.delete(key)
-
-
-async def __async_upload_to_s3(
-        bucket: str,
-        name: str,
-        content: bytes
-) -> None:
-    async with __get_client() as client:
-        try:
-            await client.head_bucket(Bucket=bucket)
-        except ClientError:
-            await client.create_bucket(Bucket=bucket)
-
-        await client.put_object(Bucket=bucket, Key=name, Body=content)
-
-
-async def __async_delete_from_s3(
-        bucket: str,
-        name: str
-) -> None:
-    async with __get_client() as client:
-        await client.delete_object(Bucket=bucket, Key=name)
-
-
-async def __async_generate_qr_code(
-        url: str,
-        fill_color: str,
-        back_color: str
-) -> bytes:
-    generator = QRCodeGenerator(fill_color, back_color)
-    return await generator.generate(url)
-
-
-@worker.task(autoretry_for=(ConnectionError, TimeoutError), retry_backoff=True, max_retries=3)
-def save_to_redis(
-        key: str,
-        value: Any
-) -> None:
-    asyncio.run(__async_save_to_redis(key, value))
-
-
-@worker.task(autoretry_for=(ConnectionError, TimeoutError), retry_backoff=True, max_retries=3)
-def clear_from_redis(key: str) -> None:
-    asyncio.run(__async_clear_from_redis(key))
-
-
-@worker.task(autoretry_for=(ClientError,), retry_backoff=True, max_retries=3)
-def upload_to_s3(
-        bucket: str,
-        name: str,
-        content: bytes
-) -> None:
-    asyncio.run(__async_upload_to_s3(bucket, name, content))
-
-
-@worker.task(autoretry_for=(ClientError,), retry_backoff=True, max_retries=3)
-def delete_from_s3(
-        bucket: str,
-        name: str
-) -> None:
-    asyncio.run(__async_delete_from_s3(bucket, name))
-
-
 @worker.task()
 def generate_qr_code(
         url: str,
-        fill_color: str,
-        back_color: str
+        *,
+        fill_color: str | None = None,
+        back_color: str | None = None,
+        pixel_size: int | None = None,
+        radius: int | None = None,
+        border: int | None = None,
+        error: str | None = None
 ) -> bytes:
-    return asyncio.run(__async_generate_qr_code(url, fill_color, back_color))
+    generator = QRCodeGenerator(
+        fill_color=fill_color,
+        back_color=back_color,
+        pixel_size=pixel_size,
+        radius=radius,
+        border=border,
+        error=error
+    )
+
+    return generator.generate(url)

@@ -105,7 +105,7 @@ class RedisController(Generic[T]):
         return "" if exact else f"*{self._default_key}:{self.key}*"
 
     async def _set(self, key: str, value: Any, *, exact_key: bool = False) -> None:
-        await asyncio.to_thread(save_to_redis.delay, self._key(key, exact=exact_key), dumps(value))
+        await self._redis.set(self._key(key, exact=exact_key), dumps(value))
 
     async def _get(self, key: str, *, exact_key: bool = False) -> Any:
         serialized: str = await self._redis.get(self._key(key, exact=exact_key))
@@ -115,7 +115,7 @@ class RedisController(Generic[T]):
         return bool(await self._redis.exists(self._key(key, exact=exact_key)))
 
     async def _remove(self, key: str, *, exact_key: bool = False) -> None:
-        await asyncio.to_thread(clear_from_redis.delay, self._key(key, exact=exact_key))
+        await self._redis.delete(self._key(key, exact=exact_key))
 
     async def _get_keys(
             self,
