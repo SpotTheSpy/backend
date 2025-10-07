@@ -1,6 +1,6 @@
 from base64 import urlsafe_b64encode
 from random import randint
-from typing import Any, ClassVar, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List
 from uuid import UUID, uuid4
 
 from pydantic import Field, field_validator, field_serializer
@@ -10,7 +10,6 @@ from app.api.v1.exceptions.game_has_already_started import GameHasAlreadyStarted
 from app.api.v1.exceptions.invalid_player_amount import InvalidPlayerAmountError
 from app.api.v1.exceptions.not_in_game import NotInGameError
 from app.assets.controllers.redis import RedisController
-from app.assets.controllers.s3.qr_codes import QRCodesController
 from app.assets.enums.payload_type import PayloadType
 from app.assets.enums.player_role import PlayerRole
 from app.assets.objects.multi_device_active_player import MultiDeviceActivePlayer
@@ -101,6 +100,9 @@ class MultiDeviceGame(AbstractRedisObject):
             secret_words_controller: RedisController[SecretWordsQueue],
             players: Dict[UUID, MultiDevicePlayer] | None = None
     ) -> 'MultiDeviceGame':
+        if await players_controller.exists(host_id):
+            raise AlreadyInGameError("You are already in game")
+
         queue: SecretWordsQueue | None = await secret_words_controller.get(host_id)
         if queue is None:
             queue = SecretWordsQueue.new(
@@ -109,21 +111,16 @@ class MultiDeviceGame(AbstractRedisObject):
             )
         secret_word: str = await queue.get_unique_word()
 
-        await cls._unhost_game(
-            host_id,
-            games_controller=games_controller,
-            players_controller=players_controller,
-            remove_active_player=False
-        )
-
         game = cls.new(
             host_id=host_id,
             player_amount=player_amount,
             secret_word=secret_word,
             controller=games_controller
         )
+
         if players is not None:
             game.players = players
+
         game.players[host_id] = MultiDevicePlayer.new(
             user_id=host_id,
             telegram_id=telegram_id,
@@ -143,13 +140,39 @@ class MultiDeviceGame(AbstractRedisObject):
 
         return game
 
+    async def unhost(self) -> None:
+        for player in self.players.values():
+            await self.players_controller.remove(player.user_id)
+
+        await self.clear()
+
+    @classmethod
+    async def rehost(
+            cls,
+            game: 'MultiDeviceGame',
+            *,
+            secret_words_controller: RedisController[SecretWordsQueue]
+    ) -> 'MultiDeviceGame':
+        await game.unhost()
+
+        host: MultiDevicePlayer = game.players.get(game.host_id)
+
+        return await cls.host(
+            host.user_id,
+            host.telegram_id,
+            host.first_name,
+            game.player_amount,
+            games_controller=game.controller,
+            players_controller=game.players_controller,
+            secret_words_controller=secret_words_controller,
+            players=game.players
+        )
+
     async def join(
             self,
             user_id: UUID,
             telegram_id: int,
-            first_name: str,
-            *,
-            players_controller: RedisController[MultiDeviceActivePlayer]
+            first_name: str
     ) -> None:
         if self.has_started:
             raise GameHasAlreadyStartedError("Game has already started")
@@ -168,7 +191,7 @@ class MultiDeviceGame(AbstractRedisObject):
         player = MultiDeviceActivePlayer.new(
             game_id=self.game_id,
             user_id=user_id,
-            controller=players_controller
+            controller=self.players_controller
         )
 
         await self.save()
@@ -176,16 +199,14 @@ class MultiDeviceGame(AbstractRedisObject):
 
     async def leave(
             self,
-            user_id: UUID,
-            *,
-            players_controller: RedisController[MultiDeviceActivePlayer]
+            user_id: UUID
     ) -> None:
         if user_id not in self.players:
             raise NotInGameError("You are not in game")
 
         self.players.pop(user_id)
 
-        await players_controller.remove(user_id)
+        await self.players_controller.remove(user_id)
         await self.save()
 
     async def start(self) -> None:
@@ -204,18 +225,3 @@ class MultiDeviceGame(AbstractRedisObject):
                 player.role = PlayerRole.CITIZEN
 
         await self.save()
-
-    @staticmethod
-    async def _unhost_game(
-            host_id: UUID,
-            *,
-            games_controller: RedisController['MultiDeviceGame'],
-            players_controller: RedisController[MultiDeviceActivePlayer],
-            remove_active_player: bool = True
-    ) -> None:
-        player: MultiDeviceActivePlayer | None = await players_controller.get(host_id)
-
-        if player is not None:
-            if remove_active_player:
-                await players_controller.remove(player.user_id)
-            await games_controller.remove(player.game_id)
