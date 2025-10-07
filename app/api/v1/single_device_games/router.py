@@ -6,7 +6,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
-from app.api.v1.exceptions.already_in_game import AlreadyInGameError
 from app.api.v1.exceptions.not_found import NotFoundError
 from app.api.v1.models.pagination import PaginatedResult, PaginationParams
 from app.api.v1.security.authenticator import Authenticator
@@ -51,24 +50,12 @@ async def create_single_device_game(
     if not await session.scalar(select(User).filter_by(id=game_model.user_id).exists().select()):
         raise NotFoundError("User with provided UUID was not found")
 
-    if await players_controller.exists(game_model.user_id):
-        raise AlreadyInGameError("You are already in game")
-
-    queue: SecretWordsQueue | None = await secret_words_controller.get(game_model.user_id)
-    if queue is None:
-        queue: SecretWordsQueue = await secret_words_controller.create(user_id=game_model.user_id)
-
-    secret_word: str = await queue.get_unique_word()
-
-    game: SingleDeviceGame = await games_controller.create(
-        user_id=game_model.user_id,
-        player_amount=game_model.player_amount,
-        secret_word=secret_word
-    )
-
-    await players_controller.create(
-        game_id=game.game_id,
-        user_id=game_model.user_id
+    game: SingleDeviceGame = await SingleDeviceGame.host(
+        game_model.user_id,
+        game_model.player_amount,
+        games_controller=games_controller,
+        players_controller=players_controller,
+        secret_words_controller=secret_words_controller
     )
 
     return SingleDeviceGameModel.from_game(game)
@@ -86,11 +73,17 @@ async def get_single_device_games(
         games_controller: Annotated[
             RedisController[SingleDeviceGame],
             Depends(single_device_games_dependency)
+        ],
+        players_controller: Annotated[
+            RedisController[SingleDeviceActivePlayer],
+            Depends(single_device_games_dependency)
         ]
 ) -> PaginatedResult[SingleDeviceGameModel]:
     games: Tuple[SingleDeviceGame, ...] = await games_controller.all(
         limit=pagination.limit,
-        offset=pagination.offset
+        offset=pagination.offset,
+        players_controller=players_controller,
+        from_json_method=SingleDeviceGame.from_json_and_controllers
     )
 
     return pagination.create_response(
@@ -111,9 +104,17 @@ async def get_single_device_game_by_uuid(
         games_controller: Annotated[
             RedisController[SingleDeviceGame],
             Depends(single_device_games_dependency)
+        ],
+        players_controller: Annotated[
+            RedisController[SingleDeviceActivePlayer],
+            Depends(single_device_games_dependency)
         ]
 ) -> SingleDeviceGameModel:
-    game: SingleDeviceGame = await games_controller.get(game_id)
+    game: SingleDeviceGame = await games_controller.get(
+        game_id,
+        players_controller=players_controller,
+        from_json_method=SingleDeviceGame.from_json_and_controllers
+    )
 
     if game is None:
         raise NotFoundError("Game with provided UUID was not found")
@@ -144,7 +145,11 @@ async def get_single_device_game_by_user_id(
     if player is None:
         raise NotFoundError("User with provided UUID was not found")
 
-    game: SingleDeviceGame = await games_controller.get(player.game_id)
+    game: SingleDeviceGame = await games_controller.get(
+        player.game_id,
+        players_controller=players_controller,
+        from_json_method=SingleDeviceGame.from_json_and_controllers
+    )
 
     if game is None:
         raise NotFoundError("Game with provided user ID was not found")
@@ -169,10 +174,52 @@ async def delete_single_device_game_by_uuid(
             Depends(single_device_players_dependency)
         ]
 ) -> None:
-    game: SingleDeviceGame = await games_controller.get(game_id)
+    game: SingleDeviceGame = await games_controller.get(
+        game_id,
+        players_controller=players_controller,
+        from_json_method=SingleDeviceGame.from_json_and_controllers
+    )
 
     if game is None:
         raise NotFoundError("Game with provided UUID was not found")
 
-    await players_controller.remove(game.user_id)
-    await games_controller.remove(game.game_id)
+    await game.unhost()
+
+
+@single_device_games_router.post(
+    "/{game_id}/restart",
+    status_code=status.HTTP_202_ACCEPTED,
+    response_model=SingleDeviceGameModel,
+    dependencies=[Authenticator.verify_api_key()],
+    name="Restart single device game by UUID"
+)
+async def restart_single_device_game_by_uuid(
+        game_id: UUID,
+        games_controller: Annotated[
+            RedisController[SingleDeviceGame],
+            Depends(single_device_games_dependency)
+        ],
+        players_controller: Annotated[
+            RedisController[SingleDeviceActivePlayer],
+            Depends(single_device_players_dependency)
+        ],
+        secret_words_controller: Annotated[
+            RedisController[SecretWordsQueue],
+            Depends(secret_words_dependency)
+        ]
+) -> SingleDeviceGameModel:
+    game: SingleDeviceGame = await games_controller.get(
+        game_id,
+        players_controller=players_controller,
+        from_json_method=SingleDeviceGame.from_json_and_controllers
+    )
+
+    if game is None:
+        raise NotFoundError("Game with provided UUID was not found")
+
+    game: SingleDeviceGame = await game.rehost(
+        game,
+        secret_words_controller=secret_words_controller
+    )
+
+    return SingleDeviceGameModel.from_game(game)

@@ -12,7 +12,7 @@ from app.assets.parameters import Parameters
 T = TypeVar('T', bound=AbstractRedisObject)
 
 
-class RedisController(Generic[T], AbstractController):
+class RedisController(AbstractController, Generic[T]):
     def __init__(
             self,
             redis: Redis,

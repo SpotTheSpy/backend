@@ -6,7 +6,7 @@ from app.assets.objects.abstract import AbstractObject
 T = TypeVar('T', bound=AbstractObject)
 
 
-class AbstractController(Generic[T], ABC):
+class AbstractController(ABC, Generic[T]):
     @abstractmethod
     async def set(
             self,

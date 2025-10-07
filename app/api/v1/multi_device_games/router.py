@@ -203,9 +203,9 @@ async def delete_multi_device_game_by_uuid(
     status_code=status.HTTP_201_CREATED,
     response_model=MultiDeviceGameModel,
     dependencies=[Authenticator.verify_api_key()],
-    description="Join game by UUID"
+    description="Join multi device game by UUID"
 )
-async def join_game_by_uuid(
+async def join_multi_device_game_by_uuid(
         game_id: UUID,
         user_id: UUID,
         session: Annotated[AsyncSession, Depends(database_session)],
@@ -249,9 +249,9 @@ async def join_game_by_uuid(
     status_code=status.HTTP_200_OK,
     response_model=MultiDeviceGameModel,
     dependencies=[Authenticator.verify_api_key()],
-    description="Leave a game by UUID"
+    description="Leave multi device game by UUID"
 )
-async def leave_game_by_uuid(
+async def leave_multi_device_game_by_uuid(
         game_id: UUID,
         user_id: UUID,
         games_controller: Annotated[
@@ -282,9 +282,9 @@ async def leave_game_by_uuid(
     status_code=status.HTTP_202_ACCEPTED,
     response_model=MultiDeviceGameModel,
     dependencies=[Authenticator.verify_api_key()],
-    description="Start game by UUID"
+    description="Start multi device game by UUID"
 )
-async def start_game_by_uuid(
+async def start_multi_device_game_by_uuid(
         game_id: UUID,
         games_controller: Annotated[
             RedisController[MultiDeviceGame],
@@ -314,9 +314,9 @@ async def start_game_by_uuid(
     status_code=status.HTTP_202_ACCEPTED,
     response_model=MultiDeviceGameModel,
     dependencies=[Authenticator.verify_api_key()],
-    description="Restart game by UUID"
+    description="Restart multi device game by UUID"
 )
-async def restart_game_by_uuid(
+async def restart_multi_device_game_by_uuid(
         game_id: UUID,
         games_controller: Annotated[
             RedisController[MultiDeviceGame],
@@ -353,7 +353,7 @@ async def restart_game_by_uuid(
     status_code=status.HTTP_201_CREATED,
     response_model=MultiDeviceGameModel,
     dependencies=[Authenticator.verify_api_key()],
-    description="Generate game QR code by UUID"
+    description="Generate multi device game QR code by UUID"
 )
 async def generate_qr_code_by_uuid(
         game_id: UUID,

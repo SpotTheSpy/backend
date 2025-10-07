@@ -20,7 +20,7 @@ class S3Config:
     password: str
 
 
-class S3Controller(Generic[T], AbstractController):
+class S3Controller(AbstractController, Generic[T]):
     def __init__(
             self,
             config: S3Config
