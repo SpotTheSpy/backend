@@ -1,15 +1,13 @@
-from dataclasses import field as dataclass_field
 from random import randint
 from typing import Dict, Any, ClassVar
 from uuid import UUID, uuid4
 
-from pydantic.dataclasses import dataclass
+from pydantic import Field
 
 from app.assets.controllers.redis import RedisController
 from app.assets.objects.redis import AbstractRedisObject
 
 
-@dataclass
 class SingleDeviceGame(AbstractRedisObject):
     key: ClassVar[str] = "single_device_game"
 
@@ -17,7 +15,7 @@ class SingleDeviceGame(AbstractRedisObject):
     player_amount: int
     secret_word: str
 
-    game_id: UUID = dataclass_field(default_factory=uuid4)
+    game_id: UUID = Field(default_factory=uuid4)
     spy_index: int | None = None
 
     def __post_init__(self) -> None:
@@ -43,21 +41,3 @@ class SingleDeviceGame(AbstractRedisObject):
             secret_word=secret_word,
             _controller=controller
         )
-
-    @classmethod
-    def from_json(
-            cls,
-            data: Dict[str, Any],
-            *,
-            controller: RedisController['SingleDeviceGame']
-    ) -> 'SingleDeviceGame':
-        return cls(**data, _controller=controller)
-
-    def to_json(self) -> Dict[str, Any]:
-        return {
-            "game_id": str(self.game_id),
-            "user_id": str(self.user_id),
-            "player_amount": self.player_amount,
-            "secret_word": self.secret_word,
-            "spy_index": self.spy_index
-        }

@@ -1,5 +1,4 @@
 import asyncio
-from abc import ABC
 from functools import partial
 from inspect import FullArgSpec, getfullargspec
 from json import dumps, loads
@@ -14,7 +13,7 @@ from app.workers.tasks import save_to_redis, clear_from_redis
 T = TypeVar('T', bound=AbstractRedisObject)
 
 
-class RedisController(Generic[T], ABC):
+class RedisController(Generic[T]):
     def __init__(
             self,
             redis: Redis,
@@ -67,7 +66,7 @@ class RedisController(Generic[T], ABC):
             primary_key: Any
     ) -> T | None:
         value: Dict[str, Any] | None = await self._get(str(primary_key))
-        return None if value is None else self.object_class.from_json(value, controller=self)
+        return None if value is None else self.object_class.from_json_and_controller(value, controller=self)
 
     async def exists(
             self,
@@ -91,7 +90,7 @@ class RedisController(Generic[T], ABC):
         values: List[T] = []
 
         for key in await self._get_keys(limit=limit, offset=offset, count=count):
-            value = self.object_class.from_json(await self._get(key, exact_key=True))
+            value = self.object_class.from_json_and_controller(await self._get(key, exact_key=True), controller=self)
             if value is None:
                 continue
             values.append(value)

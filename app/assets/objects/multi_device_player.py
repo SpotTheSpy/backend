@@ -1,7 +1,7 @@
 from typing import Any, Dict, TYPE_CHECKING, Optional
 from uuid import UUID
 
-from pydantic.dataclasses import dataclass
+from pydantic import ValidationError
 
 from app.assets.enums.player_role import PlayerRole
 from app.assets.objects.abstract import AbstractObject
@@ -12,18 +12,33 @@ else:
     MultiDeviceGame = Any
 
 
-@dataclass
 class MultiDevicePlayer(AbstractObject):
     user_id: UUID
     telegram_id: int
     first_name: str
-    _game: 'MultiDeviceGame'
+    _game: Optional['MultiDeviceGame']
 
     role: PlayerRole | None = None
 
     @property
     def primary_key(self) -> Any:
         return self.user_id
+
+    @property
+    def game(self) -> 'MultiDeviceGame':
+        if self._game is None:
+            raise ValueError("Game is not set")
+        return self._game
+
+    @game.setter
+    def game(self, value: 'MultiDeviceGame') -> None:
+        if value is None:
+            raise ValueError("Game cannot be set to None")
+        self._game = value
+
+    @property
+    def is_host(self) -> bool:
+        return self.user_id == self.game.host_id
 
     @classmethod
     def new(
@@ -42,40 +57,16 @@ class MultiDevicePlayer(AbstractObject):
         )
 
     @classmethod
-    def from_json(
+    def from_json_and_game(
             cls,
             data: Dict[str, Any],
             *,
             game: 'MultiDeviceGame'
     ) -> Optional['MultiDevicePlayer']:
         try:
-            user_id: UUID = UUID(data.pop("user_id"))
-            role: str | None = data.pop("role")
+            value = cls.model_validate(data)
+            value._game = game
 
-            if role is not None:
-                role = PlayerRole(role)
-        except (ValueError, KeyError):
-            return
-
-        return cls(
-            user_id=user_id,
-            role=role,
-            **data,
-            _game=game
-        )
-
-    def to_json(self) -> Dict[str, Any]:
-        return {
-            "user_id": str(self.user_id),
-            "telegram_id": self.telegram_id,
-            "first_name": self.first_name,
-            "role": self.role
-        }
-
-    @property
-    def game(self) -> 'MultiDeviceGame':
-        return self._game
-
-    @property
-    def is_host(self) -> bool:
-        return self.user_id == self.game.host_id
+            return value
+        except ValidationError:
+            pass

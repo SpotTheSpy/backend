@@ -1,12 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
-from pydantic import ConfigDict
-from pydantic.dataclasses import dataclass
+from pydantic import BaseModel, ValidationError
 
 
-@dataclass(config=ConfigDict(arbitrary_types_allowed=True))
-class AbstractObject(ABC):
+class AbstractObject(BaseModel, ABC, arbitrary_types_allowed=True):
     @property
     @abstractmethod
     def primary_key(self) -> Any:
@@ -18,10 +16,18 @@ class AbstractObject(ABC):
         pass
 
     @classmethod
-    @abstractmethod
-    def from_json(cls, *args, **kwargs) -> Any:
-        pass
+    def from_json(
+            cls,
+            data: Dict[str, Any],
+            **kwargs: Any
+    ) -> Optional['AbstractObject']:
+        try:
+            return cls.model_validate(data, **kwargs)
+        except ValidationError:
+            pass
 
-    @abstractmethod
-    def to_json(self) -> Dict[str, Any]:
-        pass
+    def to_json(
+            self,
+            **kwargs: Any
+    ) -> Dict[str, Any]:
+        return self.model_dump(mode="json", **kwargs)

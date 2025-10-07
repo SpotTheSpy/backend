@@ -1,16 +1,14 @@
-from dataclasses import field as dataclass_field
 from random import choice
-from typing import Dict, Any, ClassVar, List, Set
+from typing import Any, ClassVar, List, Set
 from uuid import UUID
 
-from pydantic.dataclasses import dataclass
+from pydantic import Field
 
 from app.assets.controllers.redis import RedisController
 from app.assets.objects.redis import AbstractRedisObject
 from app.assets.parameters import Parameters
 
 
-@dataclass
 class SecretWordsQueue(AbstractRedisObject):
     _FILE_PATH: ClassVar[str] = "app/assets/data/secret_words.txt"
 
@@ -20,7 +18,7 @@ class SecretWordsQueue(AbstractRedisObject):
     key: ClassVar[str] = "secret_words"
 
     user_id: UUID
-    secret_words: List[str] = dataclass_field(default_factory=list)
+    secret_words: List[str] = Field(default_factory=list)
     guaranteed_unique_count: int | None = None
 
     def __post_init__(self) -> None:
@@ -42,22 +40,6 @@ class SecretWordsQueue(AbstractRedisObject):
             user_id=user_id,
             _controller=controller
         )
-
-    @classmethod
-    def from_json(
-            cls,
-            data: Dict[str, Any],
-            *,
-            controller: RedisController['SecretWordsQueue']
-    ) -> 'SecretWordsQueue':
-        return cls(**data, _controller=controller)
-
-    def to_json(self) -> Dict[str, Any]:
-        return {
-            "user_id": str(self.user_id),
-            "secret_words": self.secret_words,
-            "guaranteed_unique_count": self.guaranteed_unique_count
-        }
 
     async def get_unique_word(self) -> str:
         available_words: Set[str] = set(self._SECRET_WORDS) - set(self.secret_words) or set(self._SECRET_WORDS)
