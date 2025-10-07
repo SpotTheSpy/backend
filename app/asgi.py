@@ -22,11 +22,6 @@ from app.logging import logger
 from config import Config
 
 
-def get_blurred_qr_code() -> bytes:
-    with open("app/assets/data/blurred.jpg", "rb") as file:
-        return file.read()
-
-
 @asynccontextmanager
 async def lifespan(fastapi_app: FastAPI):
     yield
