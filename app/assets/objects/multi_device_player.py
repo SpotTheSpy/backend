@@ -61,7 +61,7 @@ class MultiDevicePlayer(AbstractObject):
             cls,
             data: Dict[str, Any],
             *,
-            game: 'MultiDeviceGame'
+            game: Optional['MultiDeviceGame'] = None
     ) -> Optional['MultiDevicePlayer']:
         try:
             value = cls.model_validate(data)

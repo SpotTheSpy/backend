@@ -1,12 +1,12 @@
 from random import randint
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Dict, List
 from uuid import UUID, uuid4
 
-from pydantic import Field
+from pydantic import Field, field_validator, field_serializer
 
-from app.assets.controllers.context import Context
 from app.assets.controllers.redis import RedisController
 from app.assets.enums.player_role import PlayerRole
+from app.assets.objects.multi_device_player import MultiDevicePlayer
 from app.assets.objects.redis import AbstractRedisObject
 
 
@@ -21,7 +21,22 @@ class MultiDeviceGame(AbstractRedisObject):
     game_id: UUID = Field(default_factory=uuid4)
     has_started: bool = False
 
-    players: Context = Field(default_factory=Context)
+    players: Dict[UUID, MultiDevicePlayer] = Field(default_factory=dict)
+
+    @field_validator("players", mode="before")
+    def validate_players(cls, data: List[Dict[str, Any]]) -> Dict[UUID, MultiDevicePlayer]:
+        return {
+            player.user_id: player
+            for player in map(MultiDevicePlayer.from_json_and_game, data)
+            if player is not None
+        }
+
+    @field_serializer("players")
+    def serialize_players(self, players: Dict[UUID, MultiDevicePlayer]) -> List[Dict[str, Any]]:
+        return [
+            player.to_json()
+            for player in players.values()
+        ]
 
     @property
     def primary_key(self) -> Any:
@@ -47,11 +62,11 @@ class MultiDeviceGame(AbstractRedisObject):
 
     def start(self) -> None:
         self.has_started = True
-        self.player_amount = self.players.size
+        self.player_amount = len(self.players)
 
         spy_index: int = randint(0, self.player_amount - 1)
 
-        for index, player in enumerate(self.players.list):
+        for index, player in enumerate(self.players.values()):
             if index == spy_index:
                 player.role = PlayerRole.SPY
             else:
