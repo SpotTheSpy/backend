@@ -10,7 +10,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(UUID(True), primary_key=True, server_default=func.gen_random_uuid())
-    telegram_id = Column(BigInteger(), unique=True, nullable=False)
+    telegram_id = Column(BigInteger(), unique=True, nullable=False, index=True)
     first_name = Column(String(64), nullable=False)
     username = Column(String(32), unique=True, nullable=True, default=None)
     locale = Column(String(8), nullable=True, default=None)
