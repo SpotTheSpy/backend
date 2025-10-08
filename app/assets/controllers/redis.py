@@ -1,5 +1,3 @@
-from functools import partial
-from inspect import FullArgSpec, getfullargspec
 from json import dumps, loads
 from typing import Any, Tuple, List, TypeVar, Callable, Dict, Generic
 
@@ -151,20 +149,3 @@ class RedisController(AbstractController, Generic[T]):
                 break
 
         return tuple(collected)
-
-    @staticmethod
-    def _prepare_function(
-            function: Callable[..., Callable],
-            **kwargs: Any
-    ) -> partial:
-        arg_spec: FullArgSpec = getfullargspec(function)
-
-        args: List[str] = arg_spec.args + arg_spec.kwonlyargs
-
-        if arg_spec.varkw is None:
-            kwargs = {
-                k: arg for k, arg in kwargs.items()
-                if k in args
-            }
-
-        return partial(function, **kwargs)

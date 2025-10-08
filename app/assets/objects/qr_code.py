@@ -6,15 +6,15 @@ from app.assets.objects.s3 import AbstractS3Object
 class QRCode(AbstractS3Object):
     bucket: ClassVar[str] = "qrcodes"
 
+    file_format: str = "jpg"
+
     @classmethod
     def new(
             cls,
             name: str,
-            file_format: str,
             content: bytes
     ) -> Self:
         return cls(
             name=name,
-            file_format=file_format,
             content=content
         )

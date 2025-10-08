@@ -1,7 +1,7 @@
 from typing import Annotated, Tuple
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, BackgroundTasks
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
@@ -184,7 +184,12 @@ async def delete_multi_device_game_by_uuid(
         players_controller: Annotated[
             RedisController[MultiDeviceActivePlayer],
             Depends(multi_device_players_dependency)
-        ]
+        ],
+        qr_codes_controller: Annotated[
+            S3Controller[QRCode],
+            Depends(qr_codes_dependency)
+        ],
+        background_tasks: BackgroundTasks
 ) -> None:
     game: MultiDeviceGame | None = await games_controller.get(
         game_id,
@@ -194,6 +199,14 @@ async def delete_multi_device_game_by_uuid(
 
     if game is None:
         raise NotFoundError("Game with provided UUID was not found")
+
+    background_tasks.add_task(
+        qr_codes_controller.remove,
+        QRCode.new(
+            str(game.game_id),
+            b""
+        ).primary_key
+    )
 
     await game.unhost()
 
@@ -293,7 +306,12 @@ async def start_multi_device_game_by_uuid(
         players_controller: Annotated[
             RedisController[MultiDeviceActivePlayer],
             Depends(multi_device_players_dependency)
-        ]
+        ],
+        qr_codes_controller: Annotated[
+            S3Controller[QRCode],
+            Depends(qr_codes_dependency)
+        ],
+        background_tasks: BackgroundTasks
 ) -> MultiDeviceGameModel:
     game: MultiDeviceGame | None = await games_controller.get(
         game_id,
@@ -305,6 +323,14 @@ async def start_multi_device_game_by_uuid(
         raise NotFoundError("Game with provided UUID was not found")
 
     await game.start()
+
+    background_tasks.add_task(
+        qr_codes_controller.remove,
+        QRCode.new(
+            str(game.game_id),
+            b""
+        ).primary_key
+    )
 
     return MultiDeviceGameModel.from_game(game)
 
