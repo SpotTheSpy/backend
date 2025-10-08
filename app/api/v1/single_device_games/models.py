@@ -1,3 +1,4 @@
+from typing import Self
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -17,7 +18,7 @@ class SingleDeviceGameModel(BaseModel):
     def from_game(
             cls,
             game: SingleDeviceGame
-    ) -> 'SingleDeviceGameModel':
+    ) -> Self:
         return cls(
             game_id=game.game_id,
             user_id=game.user_id,

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Self
 from uuid import UUID
 
 from pydantic import BaseModel, Field, ConfigDict
@@ -23,7 +23,7 @@ class UserModel(BaseModel):
     def from_database_model(
             cls,
             user: User
-    ) -> 'UserModel':
+    ) -> Self:
         return cls.model_validate(user)
 
 

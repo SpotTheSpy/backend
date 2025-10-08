@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Self
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -19,7 +19,7 @@ class MultiDevicePlayerModel(BaseModel):
     def from_player(
             cls,
             player: MultiDevicePlayer
-    ) -> 'MultiDevicePlayerModel':
+    ) -> Self:
         return cls(
             user_id=player.user_id,
             telegram_id=player.telegram_id,
@@ -34,14 +34,14 @@ class MultiDeviceGameModel(BaseModel):
     has_started: bool
     player_amount: int = Field(ge=Parameters.MIN_PLAYER_AMOUNT, le=Parameters.MAX_PLAYER_AMOUNT)
     secret_word: str = Field(min_length=2, max_length=32)
-    qr_code_url: str = Field(min_length=16, default=None)
+    qr_code_url: str | None = Field(min_length=16, default=None)
     players: List[MultiDevicePlayerModel]
 
     @classmethod
     def from_game(
             cls,
             game: MultiDeviceGame
-    ) -> 'MultiDeviceGameModel':
+    ) -> Self:
         return cls(
             game_id=game.game_id,
             host_id=game.host_id,
@@ -49,7 +49,7 @@ class MultiDeviceGameModel(BaseModel):
             player_amount=game.player_amount,
             secret_word=game.secret_word,
             qr_code_url=game.qr_code_url,
-            players=[MultiDevicePlayerModel.from_player(player) for player in game.players.list]
+            players=[MultiDevicePlayerModel.from_player(player) for player in game.players.values()]
         )
 
 

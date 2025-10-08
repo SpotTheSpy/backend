@@ -1,14 +1,42 @@
-from abc import ABC, abstractmethod
+from abc import ABC
+from typing import ClassVar, TYPE_CHECKING, Any, Dict, Optional, Self
 
-from pydantic.dataclasses import dataclass
+from app.assets.objects.abstract import AbstractObject
 
-from app.assets.objects.base import BaseObject
+if TYPE_CHECKING:
+    from app.assets.controllers.redis import RedisController
+else:
+    RedisController = Any
 
 
-@dataclass
-class RedisObject(BaseObject, ABC):
-    @abstractmethod
-    async def save(self) -> None: pass
+class AbstractRedisObject(AbstractObject, ABC):
+    key: ClassVar[str]
 
-    @abstractmethod
-    async def clear(self) -> None: pass
+    _controller: Optional['RedisController'] = None
+
+    @property
+    def controller(self) -> 'RedisController':
+        if self._controller is None:
+            raise ValueError("Controller is not set")
+        return self._controller
+
+    @classmethod
+    def from_json_and_controller(
+            cls,
+            data: Dict[str, Any],
+            *,
+            controller: 'RedisController',
+            **kwargs: Any
+    ) -> Self | None:
+        value = cls.from_json(data, **kwargs)
+
+        if value is not None:
+            value._controller = controller
+
+        return value
+
+    async def save(self) -> None:
+        await self.controller.set(self)
+
+    async def clear(self) -> None:
+        await self.controller.remove(self.primary_key)

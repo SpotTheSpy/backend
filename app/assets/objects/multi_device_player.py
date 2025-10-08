@@ -1,77 +1,29 @@
-from typing import Any, Dict, TYPE_CHECKING, Optional
+from typing import Any, Self
 from uuid import UUID
 
-from pydantic.dataclasses import dataclass
-
 from app.assets.enums.player_role import PlayerRole
-from app.assets.objects.base import BaseObject
-
-if TYPE_CHECKING:
-    from app.assets.objects.multi_device_game import MultiDeviceGame
-else:
-    MultiDeviceGame = Any
+from app.assets.objects.abstract import AbstractObject
 
 
-@dataclass
-class MultiDevicePlayer(BaseObject):
+class MultiDevicePlayer(AbstractObject):
     user_id: UUID
     telegram_id: int
     first_name: str
-    _game: 'MultiDeviceGame'
-
     role: PlayerRole | None = None
+
+    @property
+    def primary_key(self) -> Any:
+        return self.user_id
 
     @classmethod
     def new(
             cls,
             user_id: UUID,
             telegram_id: int,
-            first_name: str,
-            *,
-            game: 'MultiDeviceGame'
-    ) -> 'MultiDevicePlayer':
+            first_name: str
+    ) -> Self:
         return cls(
             user_id=user_id,
             telegram_id=telegram_id,
-            first_name=first_name,
-            _game=game
+            first_name=first_name
         )
-
-    @classmethod
-    def from_json(
-            cls,
-            data: Dict[str, Any],
-            *,
-            game: 'MultiDeviceGame'
-    ) -> Optional['MultiDevicePlayer']:
-        try:
-            user_id: UUID = UUID(data.pop("user_id"))
-            role: str | None = data.pop("role")
-
-            if role is not None:
-                role = PlayerRole(role)
-        except (ValueError, KeyError):
-            return
-
-        return cls(
-            user_id=user_id,
-            role=role,
-            **data,
-            _game=game
-        )
-
-    def to_json(self) -> Dict[str, Any]:
-        return {
-            "user_id": str(self.user_id),
-            "telegram_id": self.telegram_id,
-            "first_name": self.first_name,
-            "role": self.role
-        }
-
-    @property
-    def game(self) -> 'MultiDeviceGame':
-        return self._game
-
-    @property
-    def is_host(self) -> bool:
-        return self.user_id == self.game.host_id
