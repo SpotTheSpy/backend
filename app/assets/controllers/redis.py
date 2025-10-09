@@ -29,9 +29,11 @@ class RedisController(AbstractController, Generic[T]):
 
     async def set(
             self,
-            value: T
+            value: T,
+            *,
+            expire: int | None = None
     ) -> None:
-        await self._set(str(value.primary_key), value.to_json())
+        await self._set(str(value.primary_key), value.to_json(), expire=expire)
 
     async def get(
             self,
@@ -97,8 +99,11 @@ class RedisController(AbstractController, Generic[T]):
     def _pattern(self, *, exact: bool = False) -> str:
         return "" if exact else f"*{self._default_key}:{self.key}*"
 
-    async def _set(self, key: str, value: Any, *, exact_key: bool = False) -> None:
-        await self._redis.set(self._key(key, exact=exact_key), dumps(value))
+    async def _set(self, key: str, value: Any, *, expire: int | None = None, exact_key: bool = False) -> None:
+        if expire is not None:
+            await self._redis.set(self._key(key, exact=exact_key), dumps(value), ex=expire)
+        else:
+            await self._redis.set(self._key(key, exact=exact_key), dumps(value))
 
     async def _get(self, key: str, *, exact_key: bool = False) -> Any:
         serialized: str = await self._redis.get(self._key(key, exact=exact_key))

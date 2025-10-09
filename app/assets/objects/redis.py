@@ -35,8 +35,8 @@ class AbstractRedisObject(AbstractObject, ABC):
 
         return value
 
-    async def save(self) -> None:
-        await self.controller.set(self)
+    async def save(self, *, expire: int | None = None) -> None:
+        await self.controller.set(self, expire=expire)
 
     async def clear(self) -> None:
         await self.controller.remove(self.primary_key)

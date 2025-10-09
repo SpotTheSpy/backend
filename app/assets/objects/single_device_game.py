@@ -104,13 +104,13 @@ class SingleDeviceGame(AbstractRedisObject):
             players_controller=players_controller
         )
 
-        await game.save()
+        await game.save(expire=3600)
 
         await SingleDeviceActivePlayer.new(
             game_id=game.game_id,
             user_id=user_id,
             controller=players_controller
-        ).save()
+        ).save(expire=3600)
 
         await queue.save()
 
