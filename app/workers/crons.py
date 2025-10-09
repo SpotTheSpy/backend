@@ -2,12 +2,12 @@ from asyncio import run, sleep
 from typing import Tuple, List
 
 from redis.asyncio import Redis
-from segno import QRCode
 
 from app.assets.controllers.redis import RedisController
 from app.assets.controllers.s3 import S3Config, S3Controller
 from app.assets.objects.multi_device_active_player import MultiDeviceActivePlayer
 from app.assets.objects.multi_device_game import MultiDeviceGame
+from app.assets.objects.qr_code import QRCode
 from app.workers.worker import worker, config
 
 
@@ -55,6 +55,6 @@ async def __async_cleanup() -> None:
     await qr_codes.remove("blurred.jpg")
 
 
-@worker.task()
+@worker.task(name="cleanup")
 def cleanup() -> None:
     run(__async_cleanup())
