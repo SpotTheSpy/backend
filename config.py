@@ -6,7 +6,6 @@ from pydantic_settings import BaseSettings
 
 class Config(BaseSettings):
     title: ClassVar[str] = "SpotTheSpy"
-
     api_key: SecretStr
 
     database_dsn: SecretStr
@@ -14,10 +13,10 @@ class Config(BaseSettings):
 
     redis_dsn: SecretStr
 
-    rabbitmq_dsn: SecretStr
-    result_backend_dsn: SecretStr | None = None
-
     s3_dsn: SecretStr
     s3_region: str = "eu-central-1"
     s3_username: SecretStr
     s3_password: SecretStr
+
+    rabbitmq_dsn: SecretStr
+    result_backend_dsn: SecretStr | None = None
