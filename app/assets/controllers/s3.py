@@ -18,6 +18,7 @@ class S3Config:
     region: str
     username: str
     password: str
+    remote_dsn: str | None = None
 
 
 class S3Controller(AbstractController, Generic[T]):
@@ -88,6 +89,11 @@ class S3Controller(AbstractController, Generic[T]):
     ) -> bytes | None:
         async with self._get_client() as client:
             try:
+                await client.head_bucket(Bucket=bucket)
+            except ClientError:
+                await client.create_bucket(Bucket=bucket)
+
+            try:
                 result: dict = await client.get_object(Bucket=bucket, Key=key)
             except ClientError:
                 return
@@ -101,6 +107,11 @@ class S3Controller(AbstractController, Generic[T]):
     ) -> bool:
         async with self._get_client() as client:
             try:
+                await client.head_bucket(Bucket=bucket)
+            except ClientError:
+                await client.create_bucket(Bucket=bucket)
+
+            try:
                 await client.head_object(Bucket=bucket, Key=key)
                 return True
             except ClientError:
@@ -112,6 +123,11 @@ class S3Controller(AbstractController, Generic[T]):
             key: str
     ) -> None:
         async with self._get_client() as client:
+            try:
+                await client.head_bucket(Bucket=bucket)
+            except ClientError:
+                await client.create_bucket(Bucket=bucket)
+
             await client.delete_object(Bucket=bucket, Key=key)
 
     async def _url(
@@ -124,7 +140,7 @@ class S3Controller(AbstractController, Generic[T]):
         if expire is None:
             expire = 3600
 
-        async with self._get_client() as client:
+        async with self._get_client(endpoint_url=self._config.remote_dsn) as client:
             try:
                 url: str = await client.generate_presigned_url(
                     "get_object",
@@ -144,11 +160,15 @@ class S3Controller(AbstractController, Generic[T]):
         return f"{name}.{file_format}"
 
     @asynccontextmanager
-    async def _get_client(self) -> AsyncGenerator[AioBaseClient, None]:
+    async def _get_client(
+            self,
+            *,
+            endpoint_url: str | None = None
+    ) -> AsyncGenerator[AioBaseClient, None]:
         session = get_session()
         async with session.create_client(
                 "s3",
-                endpoint_url=self._config.dsn,
+                endpoint_url=endpoint_url or self._config.dsn,
                 region_name=self._config.region,
                 aws_access_key_id=self._config.username,
                 aws_secret_access_key=self._config.password

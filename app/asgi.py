@@ -35,7 +35,8 @@ s3_config = S3Config(
     config.s3_dsn.get_secret_value(),
     config.s3_region,
     config.s3_username.get_secret_value(),
-    config.s3_password.get_secret_value()
+    config.s3_password.get_secret_value(),
+    config.s3_remote_dsn.get_secret_value() if config.s3_remote_dsn is not None else None
 )
 
 app = FastAPI(title=config.title, lifespan=lifespan)

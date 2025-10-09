@@ -17,6 +17,7 @@ class Config(BaseSettings):
     s3_region: str = "eu-central-1"
     s3_username: SecretStr
     s3_password: SecretStr
+    s3_remote_dsn: SecretStr | None = None
 
     rabbitmq_dsn: SecretStr
     result_backend_dsn: SecretStr | None = None
