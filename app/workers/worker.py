@@ -1,4 +1,5 @@
 from celery import Celery
+from celery.schedules import crontab
 
 from config import Config
 
@@ -17,6 +18,13 @@ def create_worker() -> Celery:
         task_time_limit=30,
         worker_max_tasks_per_child=100
     )
+
+    celery.conf.beat_schedule = {
+        "hourly_cleanup": {
+            "task": "cleanup",
+            "schedule": crontab(minute=0, hour="*")
+        },
+    }
 
     return celery
 
