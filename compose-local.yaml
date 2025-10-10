@@ -51,6 +51,8 @@ services:
     restart: on-failure
     command: bash -c "poetry run alembic upgrade head && poetry run uvicorn --host 0.0.0.0 --port 8000 --loop asyncio --log-config app/logging.json app.asgi:app"
     env_file: ".server.env"
+    networks:
+      - shared-network
     ports:
       - "8000:8000"
     labels:
@@ -89,3 +91,7 @@ volumes:
   redis-data:
   minio-data:
   rabbitmq-data:
+
+networks:
+  shared-network:
+    external: true
