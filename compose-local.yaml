@@ -1,0 +1,91 @@
+services:
+  postgres:
+    container_name: backend_postgres
+    image: postgres:latest
+    restart: on-failure
+    env_file: ".postgres.env"
+    ports:
+      - "6432:5432"
+    volumes:
+      - "postgres-data:/data"
+
+  redis:
+    container_name: backend_redis
+    image: redis:latest
+    restart: on-failure
+    command: "redis-server /usr/local/etc/redis/redis.conf"
+    ports:
+      - "6379:6379"
+    volumes:
+      - "redis-data:/data"
+      - "./redis.conf:/usr/local/etc/redis/redis.conf"
+
+  minio:
+    container_name: backend_minio
+    image: minio/minio:latest
+    restart: on-failure
+    command: server /data --console-address ":9001"
+    env_file: ".minio.env"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - "minio-data:/data"
+
+  rabbitmq:
+    container_name: backend_rabbitmq
+    image: rabbitmq:3-management
+    restart: on-failure
+    env_file: ".rabbitmq.env"
+    ports:
+      - "5672:5672"
+      - "5673:15672"
+    volumes:
+      - "rabbitmq-data:/data"
+
+  server:
+    container_name: backend_server
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: on-failure
+    command: bash -c "poetry run alembic upgrade head && poetry run uvicorn --host 0.0.0.0 --port 8000 --loop asyncio --log-config app/logging.json app.asgi:app"
+    env_file: ".server.env"
+    ports:
+      - "8000:8000"
+    labels:
+      - "logging.promtail=true"
+      - "logging_jobname=monopoly_server"
+    depends_on:
+      - postgres
+      - redis
+      - minio
+      - rabbitmq
+
+  celery_worker:
+    container_name: backend_celery_worker
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: on-failure
+    command: bash -c "poetry run celery -A app.workers.worker.worker worker --concurrency=1 --loglevel=INFO"
+    env_file: ".server.env"
+    depends_on:
+      - rabbitmq
+
+  celery_beat:
+    container_name: backend_celery_beat
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: on-failure
+    command: bash -c "poetry run celery -A app.workers.worker.worker beat --loglevel=INFO"
+    env_file: ".server.env"
+    depends_on:
+      - rabbitmq
+
+volumes:
+  postgres-data:
+  redis-data:
+  minio-data:
+  rabbitmq-data:

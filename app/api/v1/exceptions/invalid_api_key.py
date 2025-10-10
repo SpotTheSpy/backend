@@ -1,0 +1,7 @@
+from starlette import status
+
+from app.api.v1.exceptions.http import HTTPError
+
+
+class InvalidAPIKeyError(HTTPError):
+    status_code = status.HTTP_401_UNAUTHORIZED

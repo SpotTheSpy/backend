@@ -1,0 +1,8 @@
+.venv
+.idea
+.git
+README.md
+
+__pycache__/
+*.py[cod]
+*.so
