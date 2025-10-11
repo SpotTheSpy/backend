@@ -202,7 +202,7 @@ class MultiDeviceGame(AbstractRedisObject):
             raise GameHasAlreadyStartedError("Game has already started")
         if user_id in self.players:
             raise AlreadyInGameError("You are already in game")
-        if self.player_amount >= Parameters.MAX_PLAYER_AMOUNT:
+        if len(self.players) >= self.player_amount:
             raise InvalidPlayerAmountError("Game has too many players")
 
         self.players[user_id] = MultiDevicePlayer.new(
