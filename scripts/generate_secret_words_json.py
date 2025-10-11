@@ -15,7 +15,7 @@ def main() -> None:
         secret_words: List[str] = file.read().splitlines()
     logging.info(f"Exported {len(secret_words)} secret words")
 
-    json: Dict[str, str] = {secret_word: secret_word.title() for secret_word in secret_words}
+    json: Dict[str, str] = {secret_word: secret_word.title().replace("_", " ") for secret_word in secret_words}
     logging.info("Converted secret words to JSON")
 
     with open(__FILE_PATH.format(file_name=f"{file_name}.json"), "w", encoding="utf-8") as file:
