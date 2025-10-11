@@ -1,49 +1,57 @@
 services:
-  postgres:
+  backend_postgres:
     container_name: backend_postgres
     image: postgres:latest
     restart: on-failure
     env_file: ".postgres.env"
+    networks:
+      - shared-network
     ports:
       - "6432:5432"
     volumes:
       - "postgres-data:/data"
 
-  redis:
+  backend_redis:
     container_name: backend_redis
     image: redis:latest
     restart: on-failure
     command: "redis-server /usr/local/etc/redis/redis.conf"
+    networks:
+      - shared-network
     ports:
       - "6379:6379"
     volumes:
       - "redis-data:/data"
       - "./redis.conf:/usr/local/etc/redis/redis.conf"
 
-  minio:
+  backend_minio:
     container_name: backend_minio
     image: minio/minio:latest
     restart: on-failure
     command: server /data --console-address ":9001"
     env_file: ".minio.env"
+    networks:
+      - shared-network
     ports:
       - "9000:9000"
       - "9001:9001"
     volumes:
       - "minio-data:/data"
 
-  rabbitmq:
+  backend_rabbitmq:
     container_name: backend_rabbitmq
     image: rabbitmq:3-management
     restart: on-failure
     env_file: ".rabbitmq.env"
+    networks:
+      - shared-network
     ports:
       - "5672:5672"
       - "5673:15672"
     volumes:
       - "rabbitmq-data:/data"
 
-  server:
+  backend_server:
     container_name: backend_server
     build:
       context: .
@@ -64,7 +72,7 @@ services:
       - minio
       - rabbitmq
 
-  celery_worker:
+  backend_celery_worker:
     container_name: backend_celery_worker
     build:
       context: .
@@ -75,7 +83,7 @@ services:
     depends_on:
       - rabbitmq
 
-  celery_beat:
+  backend_celery_beat:
     container_name: backend_celery_beat
     build:
       context: .
