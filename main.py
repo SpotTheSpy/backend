@@ -7,7 +7,7 @@ import uvicorn.loops.asyncio
 from app.logging import API_LOG_CONFIG
 
 if __name__ == "__main__":
-    if sys.platform == "win32":
+    if sys.platform == "win32":  # Using SelectorEventLoop on Windows to avoid psycopg exceptions
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
         uvicorn.loops.asyncio.asyncio_loop_factory = lambda use_subprocess: SelectorEventLoop
 

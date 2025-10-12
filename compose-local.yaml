@@ -1,4 +1,5 @@
 services:
+  # Main SQL Database
   backend_postgres:
     container_name: backend_postgres
     image: postgres:latest
@@ -11,6 +12,7 @@ services:
     volumes:
       - "postgres-data:/data"
 
+  # Redis database for operating games and caching data
   backend_redis:
     container_name: backend_redis
     image: redis:latest
@@ -24,6 +26,7 @@ services:
       - "redis-data:/data"
       - "./redis.conf:/usr/local/etc/redis/redis.conf"
 
+  # S3 storage for managing files
   backend_minio:
     container_name: backend_minio
     image: minio/minio:latest
@@ -38,6 +41,7 @@ services:
     volumes:
       - "minio-data:/data"
 
+  # Broker for managing celery tasks
   backend_rabbitmq:
     container_name: backend_rabbitmq
     image: rabbitmq:3-management
@@ -51,6 +55,7 @@ services:
     volumes:
       - "rabbitmq-data:/data"
 
+  # Main ASGI app
   backend_server:
     container_name: backend_server
     build:
@@ -72,6 +77,7 @@ services:
       - minio
       - rabbitmq
 
+  # Main Celery worker for managing task execution
   backend_celery_worker:
     container_name: backend_celery_worker
     build:
@@ -83,6 +89,7 @@ services:
     depends_on:
       - rabbitmq
 
+  # Cron worker for executing scheduled tasks
   backend_celery_beat:
     container_name: backend_celery_beat
     build:

@@ -39,7 +39,7 @@ s3_config = S3Config(
     config.s3_remote_dsn.get_secret_value() if config.s3_remote_dsn is not None else None
 )
 
-app = FastAPI(title=config.title, lifespan=lifespan)
+app = FastAPI(title=config.TITLE, lifespan=lifespan)
 
 app.state.config = config
 app.state.database = database

@@ -5,7 +5,14 @@ from pydantic_settings import BaseSettings
 
 
 class Config(BaseSettings):
-    title: ClassVar[str] = "SpotTheSpy"
+    """
+    Main config class.
+
+    Provides access credentials for all Back-End services, and an API-Key for endpoint access.
+    """
+
+    TITLE: ClassVar[str] = "SpotTheSpy"
+
     api_key: SecretStr
 
     database_dsn: SecretStr
