@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, TypeVar, Any, Generic
+from typing import AsyncGenerator, TypeVar, Any, Generic, Self
 
 from aiobotocore.client import AioBaseClient
 from aiobotocore.session import get_session
@@ -8,6 +8,7 @@ from pydantic.dataclasses import dataclass
 
 from app.assets.controllers.abstract import AbstractController
 from app.assets.objects.s3 import AbstractS3Object
+from config import Config
 
 T = TypeVar('T', bound=AbstractS3Object)
 
@@ -19,6 +20,19 @@ class S3Config:
     username: str
     password: str
     remote_dsn: str | None = None
+
+    @classmethod
+    def from_config(
+            cls,
+            config: Config
+    ) -> Self:
+        return cls(
+            config.s3_dsn.get_secret_value(),
+            config.s3_region,
+            config.s3_username.get_secret_value(),
+            config.s3_password.get_secret_value(),
+            config.s3_remote_dsn.get_secret_value() if config.s3_remote_dsn is not None else None
+        )
 
 
 class S3Controller(AbstractController, Generic[T]):
