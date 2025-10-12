@@ -30,7 +30,7 @@ async def lifespan(fastapi_app: FastAPI) -> AsyncContextManager[None]:
 
     Defines startup and shutdown logic.
 
-    :param fastapi_app: FastAPI app to provide lifespan for
+    :param fastapi_app: FastAPI app to provide lifespan for.
     """
 
     yield
@@ -69,9 +69,9 @@ async def on_validation_error(
 
     Executes when a Pydantic model provided by either user or ASGI is invalid.
 
-    :param request: API request instance
-    :param exception: ValidationError instance
-    :return: JSON API response
+    :param request: API request instance.
+    :param exception: ValidationError instance.
+    :return: JSON API response.
     """
 
     return JSONResponse(
@@ -91,9 +91,9 @@ async def on_http_error(
     Executes when ASGI server raises a business-logic level exception,
     such as invalid access credentials or object not found.
 
-    :param request: API request instance
-    :param exception: HTTPError instance
-    :return: JSON API response
+    :param request: API request instance.
+    :param exception: HTTPError instance.
+    :return: JSON API response.
     """
 
     return JSONResponse(
@@ -112,9 +112,9 @@ async def on_server_error(
 
     Executes when ASGI server raises any internal exception which should be inspected and debugged.
 
-    :param request: API request instance
-    :param exception: Exception instance
-    :return: JSON API response
+    :param request: API request instance.
+    :param exception: Exception instance.
+    :return: JSON API response.
     """
 
     logger.exception(exception)
