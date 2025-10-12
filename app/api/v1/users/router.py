@@ -10,7 +10,6 @@ from starlette import status
 
 from app.api.v1.exceptions.already_exists import AlreadyExistsError
 from app.api.v1.exceptions.not_found import NotFoundError
-from app.api.v1.exceptions.unique_violation import UniqueViolationError
 from app.api.v1.models.pagination import PaginationParams, PaginatedResult
 from app.api.v1.security.authenticator import Authenticator
 from app.api.v1.users.filters import users_filters
@@ -149,7 +148,7 @@ async def update_user_by_uuid(
     try:
         await session.commit()
     except IntegrityError:
-        raise UniqueViolationError("User with specified fields already exists")
+        raise AlreadyExistsError("User with specified fields already exists")
 
 
 @users_router.delete(

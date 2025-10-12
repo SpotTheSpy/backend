@@ -8,7 +8,7 @@ class Config(BaseSettings):
     """
     Main config class.
 
-    Provides access credentials for all Back-End services, and an API-Key for endpoint access.
+    Provides access credentials for all Back-End services, and an API Key for endpoint access.
     """
 
     TITLE: ClassVar[str] = "SpotTheSpy"
