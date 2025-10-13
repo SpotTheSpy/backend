@@ -33,7 +33,7 @@ class Database:
             dsn: str
     ) -> Self:
         """
-        Create database instance from dsn string.
+        Create database instance from DSN string.
 
         :param dsn: Database DSN string.
         :return: Database instance.
