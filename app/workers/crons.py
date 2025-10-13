@@ -12,6 +12,10 @@ from app.workers.worker import worker, config
 
 
 async def __async_cleanup() -> None:
+    """
+    Asynchronously clean up unused data and files.
+    """
+
     redis = Redis.from_url(config.redis_dsn.get_secret_value())
     s3_config = S3Config(
         config.s3_dsn.get_secret_value(),
@@ -29,6 +33,7 @@ async def __async_cleanup() -> None:
     limit: int = 10
     offset: int = 0
 
+    # Filling a list with all multi-device games to later detect unused ones and cleanup them
     while True:
         new_games: Tuple[MultiDeviceGame, ...] = await multi_device_games.all(
             limit=limit,
@@ -45,6 +50,7 @@ async def __async_cleanup() -> None:
         games.extend(new_games)
         offset += limit
 
+    # Removing all games where there are no players left or the host is no longer present
     for game in games:
         if not game.players or await multi_device_players.get(game.host_id) is None:
             await game.unhost()
@@ -52,9 +58,11 @@ async def __async_cleanup() -> None:
 
             await sleep(1)
 
-    await qr_codes.remove("blurred.jpg")
-
 
 @worker.task(name="cleanup")
 def cleanup() -> None:
+    """
+    Celery task for cleaning up unused data and files.
+    """
+
     run(__async_cleanup())

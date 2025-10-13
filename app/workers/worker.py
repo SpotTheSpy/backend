@@ -7,6 +7,12 @@ config = Config(_env_file=".env")
 
 
 def create_worker() -> Celery:
+    """
+    Create a Celery worker for task management.
+
+    :return: Celery worker instance.
+    """
+
     celery = Celery(
         "worker",
         broker=config.rabbitmq_dsn.get_secret_value(),
@@ -29,4 +35,4 @@ def create_worker() -> Celery:
     return celery
 
 
-worker = create_worker()
+worker = create_worker()  # Main Celery worker
