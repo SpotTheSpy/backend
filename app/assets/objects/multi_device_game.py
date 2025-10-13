@@ -254,7 +254,13 @@ class MultiDeviceGame(AbstractRedisObject):
             *,
             qr_codes_controller: S3Controller[QRCode]
     ) -> None:
-        if await qr_codes_controller.exists(f"{self.game_id}.jpg"):
+        qr_code = QRCode.new(
+            str(self.game_id),
+            b""
+        )
+
+        if await qr_codes_controller.exists(qr_code.primary_key):
+            self.qr_code_url = await qr_codes_controller.url(qr_code.primary_key)
             return
 
         task: AsyncResult = await asyncio.to_thread(generate_qr_code_task.delay, self.join_url)

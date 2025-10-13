@@ -103,7 +103,7 @@ async def get_user_by_uuid(
         session: Annotated[AsyncSession, Depends(database_session)]
 ) -> UserModel:
     """
-    Retrieve a user by UUID.
+    Retrieve a user by user ID.
 
     Returns status code ```404``` if a user with provided UUID does not exist,
     otherwise returns status code ```200``` and a retrieved user model.
