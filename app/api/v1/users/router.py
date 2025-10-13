@@ -31,6 +31,13 @@ async def create_user(
         user_model: CreateUserModel,
         session: Annotated[AsyncSession, Depends(database_session)]
 ) -> UserModel:
+    """
+    Create a new bot user.
+
+    Returns status code ```409``` if a user with the same telegram ID or username already exists,
+    otherwise returns status code ```201``` and a created user model.
+    """
+
     user = User(
         telegram_id=user_model.telegram_id,
         first_name=user_model.first_name,
@@ -59,6 +66,14 @@ async def get_users(
         session: Annotated[AsyncSession, Depends(database_session)],
         filters: str = Query(default=""),
 ) -> PaginatedResult[UserModel]:
+    """
+    Retrieve a list of users.
+
+    Returns a list of user models. Accepts pagination parameters and filters query.
+
+    List can be filtered by ```first_name```, ```locale``` and ```created_at``` parameters.
+    """
+
     query: Select = pagination.apply(
         FilterCore(User, users_filters).get_query(filters)
     )
@@ -87,6 +102,13 @@ async def get_user_by_uuid(
         user_id: UUID,
         session: Annotated[AsyncSession, Depends(database_session)]
 ) -> UserModel:
+    """
+    Retrieve a user by UUID.
+
+    Returns status code ```404``` if a user with provided UUID does not exist,
+    otherwise returns status code ```200``` and a retrieved user model.
+    """
+
     user: User = await session.scalar(
         select(User)
         .filter_by(id=user_id)
@@ -109,6 +131,13 @@ async def get_user_by_telegram_id(
         telegram_id: int,
         session: Annotated[AsyncSession, Depends(database_session)]
 ) -> UserModel:
+    """
+    Retrieve a user by telegram ID.
+
+    Returns status code ```404``` if a user with provided telegram ID does not exist,
+    otherwise returns status code ```200``` and a retrieved user model.
+    """
+
     user: User = await session.scalar(
         select(User)
         .filter_by(telegram_id=telegram_id)
@@ -131,6 +160,13 @@ async def update_user_by_uuid(
         user_model: UpdateUserModel,
         session: Annotated[AsyncSession, Depends(database_session)]
 ) -> None:
+    """
+    Update a user by UUID.
+
+    Returns status code ```404``` if a user with provided UUID does not exist,
+    otherwise returns status code ```204```.
+    """
+
     user: User = await session.scalar(
         select(User)
         .filter_by(id=user_id)
@@ -161,6 +197,13 @@ async def delete_user_by_uuid(
         user_id: UUID,
         session: Annotated[AsyncSession, Depends(database_session)]
 ) -> None:
+    """
+    Delete a user by UUID.
+
+    Returns status code ```404``` if a user with provided UUID does not exist,
+    otherwise returns status code ```204```.
+    """
+
     user: User = await session.scalar(
         select(User)
         .filter_by(id=user_id)
