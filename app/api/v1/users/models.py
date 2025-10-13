@@ -38,6 +38,7 @@ class UserModel(BaseModel):
     """
     First name from telegram.
     """
+
     username: str | None = Field(min_length=5, max_length=32, default=None)
     """
     Username from telegram.
