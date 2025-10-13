@@ -15,8 +15,12 @@ from app.assets.objects.secret_words_queue import SecretWordsQueue
 from app.assets.objects.single_device_active_player import SingleDeviceActivePlayer
 from app.assets.objects.single_device_game import SingleDeviceGame
 from app.database.models import User
-from app.dependencies import single_device_games_dependency, secret_words_dependency, database_session, \
+from app.dependencies import (
+    single_device_games_dependency,
+    secret_words_dependency,
+    database_session,
     single_device_players_dependency
+)
 
 single_device_games_router = APIRouter(prefix="/single_device_games", tags=["Single_device_games"])
 
@@ -26,7 +30,7 @@ single_device_games_router = APIRouter(prefix="/single_device_games", tags=["Sin
     status_code=status.HTTP_201_CREATED,
     response_model=SingleDeviceGameModel,
     dependencies=[Authenticator.verify_api_key()],
-    description="Create a single device game"
+    name="Create a new single-device game"
 )
 async def create_single_device_game(
         game_model: CreateSingleDeviceGameModel,
@@ -47,6 +51,13 @@ async def create_single_device_game(
             Depends(secret_words_dependency)
         ]
 ) -> SingleDeviceGameModel:
+    """
+    Create a new single-device game.
+
+    Returns status code ```404``` if the user does not exist and 409 if you are already hosting a single-device game,
+    otherwise returns status code ```201``` and a created game model.
+    """
+
     if not await session.scalar(select(User).filter_by(id=game_model.user_id).exists().select()):
         raise NotFoundError("User with provided UUID was not found")
 
@@ -66,7 +77,7 @@ async def create_single_device_game(
     status_code=status.HTTP_200_OK,
     response_model=PaginatedResult[SingleDeviceGameModel],
     dependencies=[Authenticator.verify_api_key()],
-    name="Get all single device games"
+    name="Get all single-device games"
 )
 async def get_single_device_games(
         pagination: Annotated[PaginationParams, Depends()],
@@ -79,6 +90,12 @@ async def get_single_device_games(
             Depends(single_device_games_dependency)
         ]
 ) -> PaginatedResult[SingleDeviceGameModel]:
+    """
+    Retrieve a list of single-device games.
+
+    Returns a list of game models. Accepts pagination parameters.
+    """
+
     games: Tuple[SingleDeviceGame, ...] = await games_controller.all(
         limit=pagination.limit,
         offset=pagination.offset,
@@ -97,7 +114,7 @@ async def get_single_device_games(
     status_code=status.HTTP_200_OK,
     response_model=SingleDeviceGameModel,
     dependencies=[Authenticator.verify_api_key()],
-    name="Get single device game by UUID"
+    name="Get single-device game by UUID"
 )
 async def get_single_device_game_by_uuid(
         game_id: UUID,
@@ -110,6 +127,13 @@ async def get_single_device_game_by_uuid(
             Depends(single_device_games_dependency)
         ]
 ) -> SingleDeviceGameModel:
+    """
+    Retrieve a single-device game by UUID.
+
+    Returns status code ```404``` if a game with provided UUID does not exist,
+    otherwise returns status code ```200``` and a retrieved game model.
+    """
+
     game: SingleDeviceGame = await games_controller.get(
         game_id,
         players_controller=players_controller,
@@ -127,7 +151,7 @@ async def get_single_device_game_by_uuid(
     status_code=status.HTTP_200_OK,
     response_model=SingleDeviceGameModel,
     dependencies=[Authenticator.verify_api_key()],
-    name="Get single device game by user ID"
+    name="Get single-device game by user ID"
 )
 async def get_single_device_game_by_user_id(
         user_id: UUID,
@@ -140,6 +164,13 @@ async def get_single_device_game_by_user_id(
             Depends(single_device_players_dependency)
         ]
 ) -> SingleDeviceGameModel:
+    """
+    Retrieve a single-device game by user ID.
+
+    Returns status code ```404``` if a user with provided UUID does not exist or user does not host a game,
+    otherwise returns status code ```200``` and a retrieved game model.
+    """
+
     player: SingleDeviceActivePlayer = await players_controller.get(user_id)
 
     if player is None:
@@ -161,7 +192,7 @@ async def get_single_device_game_by_user_id(
     "/{game_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Authenticator.verify_api_key()],
-    name="Delete single device game by UUID"
+    name="Delete single-device game by UUID"
 )
 async def delete_single_device_game_by_uuid(
         game_id: UUID,
@@ -174,6 +205,13 @@ async def delete_single_device_game_by_uuid(
             Depends(single_device_players_dependency)
         ]
 ) -> None:
+    """
+    Delete a single-device game by user ID.
+
+    Returns status code ```404``` if a game with provided UUID does not exist,
+    otherwise returns status code ```204```.
+    """
+
     game: SingleDeviceGame = await games_controller.get(
         game_id,
         players_controller=players_controller,
@@ -191,7 +229,7 @@ async def delete_single_device_game_by_uuid(
     status_code=status.HTTP_202_ACCEPTED,
     response_model=SingleDeviceGameModel,
     dependencies=[Authenticator.verify_api_key()],
-    name="Restart single device game by UUID"
+    name="Restart single-device game by UUID"
 )
 async def restart_single_device_game_by_uuid(
         game_id: UUID,
@@ -208,6 +246,13 @@ async def restart_single_device_game_by_uuid(
             Depends(secret_words_dependency)
         ]
 ) -> SingleDeviceGameModel:
+    """
+    Restart a single-device game by UUID.
+
+    Returns status code ```404``` if a game with provided UUID does not exist,
+    otherwise returns status code ```202``` and a new game model.
+    """
+
     game: SingleDeviceGame = await games_controller.get(
         game_id,
         players_controller=players_controller,
