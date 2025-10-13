@@ -27,4 +27,4 @@ class Config(BaseSettings):
     s3_remote_dsn: SecretStr | None = None
 
     rabbitmq_dsn: SecretStr
-    result_backend_dsn: SecretStr | None = None
+    result_backend_dsn: str = "rpc://"

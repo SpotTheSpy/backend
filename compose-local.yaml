@@ -8,7 +8,7 @@ services:
     networks:
       - shared-network
     ports:
-      - "6432:5432"
+      - "5433:5432"
     volumes:
       - "postgres-data:/data"
 
@@ -54,52 +54,6 @@ services:
       - "5673:15672"
     volumes:
       - "rabbitmq-data:/data"
-
-  # Main ASGI app.
-  backend_server:
-    container_name: backend_server
-    build:
-      context: .
-      dockerfile: Dockerfile
-    restart: on-failure
-    command: bash -c "poetry run alembic upgrade head && poetry run uvicorn --host 0.0.0.0 --port 8000 --loop asyncio --log-config app/logging.json app.asgi:app"
-    env_file: ".server.env"
-    networks:
-      - shared-network
-    ports:
-      - "8000:8000"
-    labels:
-      - "logging.promtail=true"
-      - "logging_jobname=monopoly_server"
-    depends_on:
-      - postgres
-      - redis
-      - minio
-      - rabbitmq
-
-  # Main Celery worker for managing task execution.
-  backend_celery_worker:
-    container_name: backend_celery_worker
-    build:
-      context: .
-      dockerfile: Dockerfile
-    restart: on-failure
-    command: bash -c "poetry run celery -A app.workers.worker.worker worker --concurrency=1 --loglevel=INFO"
-    env_file: ".server.env"
-    depends_on:
-      - rabbitmq
-
-  # Cron worker for executing scheduled tasks.
-  backend_celery_beat:
-    container_name: backend_celery_beat
-    build:
-      context: .
-      dockerfile: Dockerfile
-    restart: on-failure
-    command: bash -c "poetry run celery -A app.workers.worker.worker beat --loglevel=INFO"
-    env_file: ".server.env"
-    depends_on:
-      - rabbitmq
 
 volumes:
   postgres-data:

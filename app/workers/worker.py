@@ -16,7 +16,7 @@ def create_worker() -> Celery:
     celery = Celery(
         "worker",
         broker=config.rabbitmq_dsn.get_secret_value(),
-        backend=config.result_backend_dsn.get_secret_value(),
+        backend=config.result_backend_dsn,
         include=["app.workers.tasks", "app.workers.crons"]
     )
 
