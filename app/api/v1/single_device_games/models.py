@@ -1,7 +1,7 @@
 from typing import Self
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from app.assets.objects.single_device_game import SingleDeviceGame
 from app.assets.parameters import Parameters
@@ -18,6 +18,20 @@ class SingleDeviceGameModel(BaseModel):
         secret_word: Game's secret word tag.
         spy_index: Index of a game's spy (From 0 to player amount).
     """
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "game_id": "UUID",
+                    "user_id": "Host UUID",
+                    "player_amount": 4,
+                    "secret_word": "apple",
+                    "spy_index": 0
+                }
+            ]
+        }
+    )
 
     game_id: UUID
     """
@@ -73,6 +87,17 @@ class CreateSingleDeviceGameModel(BaseModel):
         user_id: Host UUID.
         player_amount: Count of players.
     """
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "user_id": "Host UUID",
+                    "player_amount": 4
+                }
+            ]
+        }
+    )
 
     user_id: UUID
     """

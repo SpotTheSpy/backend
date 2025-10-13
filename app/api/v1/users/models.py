@@ -22,7 +22,22 @@ class UserModel(BaseModel):
         updated_at: User's last update date.
     """
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "id": "UUID",
+                    "telegram_id": 123456789,
+                    "first_name": "John Smith",
+                    "username": "john123",
+                    "locale": "en",
+                    "created_at": "Creation date",
+                    "updated_at": "Last update date"
+                }
+            ]
+        }
+    )
 
     id: UUID
     """
@@ -85,6 +100,19 @@ class CreateUserModel(BaseModel):
         locale: User's locale (Nullable, must be a default locale format). Used to localize telegram responses.
     """
 
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "telegram_id": 123456789,
+                    "first_name": "John Smith",
+                    "username": "john123",
+                    "locale": "en"
+                }
+            ]
+        }
+    )
+
     telegram_id: int
     """
     User's telegram ID.
@@ -116,6 +144,19 @@ class UpdateUserModel(BaseModel):
         username: Username from telegram (Min length is 5 symbols, max length is 32 symbols).
         locale: User's locale (Must be a default locale format). Used to localize telegram responses.
     """
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "telegram_id": 123456789,
+                    "first_name": "John Smith",
+                    "username": "john123",
+                    "locale": "en"
+                }
+            ]
+        }
+    )
 
     telegram_id: int | None = None
     """

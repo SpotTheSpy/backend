@@ -1,7 +1,7 @@
 from typing import List, Self
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from app.assets.enums.player_role import PlayerRole
 from app.assets.objects.multi_device_game import MultiDeviceGame
@@ -19,6 +19,19 @@ class MultiDevicePlayerModel(BaseModel):
         first_name: First name from telegram.
         role: User's role in game.
     """
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "user_id": "UUID",
+                    "telegram_id": 123456789,
+                    "first_name": "John Smith",
+                    "role": PlayerRole.CITIZEN
+                }
+            ]
+        }
+    )
 
     user_id: UUID
     """
@@ -73,6 +86,29 @@ class MultiDeviceGameModel(BaseModel):
         qr_code_url: QR code URL for a direct image download.
         players: List of game players.
     """
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "game_id": "UUID",
+                    "host_id": "Host UUID",
+                    "has_started": True,
+                    "player_amount": 4,
+                    "secret_word": "apple",
+                    "qr_code_url": "https://example.com/qr.jpg",
+                    "players": [
+                        {
+                            "user_id": "UUID",
+                            "telegram_id": 123456789,
+                            "first_name": "John Smith",
+                            "role": PlayerRole.CITIZEN
+                        }
+                    ]
+                }
+            ]
+        }
+    )
 
     game_id: UUID
     """
@@ -140,6 +176,17 @@ class CreateMultiDeviceGameModel(BaseModel):
         host_id: Host UUID.
         player_amount: Count of max players who can join.
     """
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "host_id": "Host UUID",
+                    "player_amount": 4
+                }
+            ]
+        }
+    )
 
     host_id: UUID
     """
