@@ -122,7 +122,7 @@ celery -A app.workers.worker.worker beat --loglevel=INFO
 
 - Root API path provided by an ASGI server: http://localhost:8000/api
 - API Swagger with each endpoint listed, documented and ready to use: http://localhost:8000/docs
-- MinIO storage manager: http://localhost:9000
+- MinIO storage manager: http://localhost:9001
 - RabbitMQ manager: http://localhost:5673
 
 PostgreSQL's management via ```pgAdmin``` is accessible with these credentials:
