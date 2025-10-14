@@ -130,7 +130,7 @@ PostgreSQL's management via ```pgAdmin``` is accessible with these credentials:
 - Password: ```{Password in .postgres.env file}```
 - Hostname: ```localhost```
 - Port: ```5433```
-- Database name: ```SpotTheSpy```
+- Database name: ```spotthespy```
 
 Redis' management via ```Redis Insight``` is accessible with these credentials:
 - Username: ```default```
