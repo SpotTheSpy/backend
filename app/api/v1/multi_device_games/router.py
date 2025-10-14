@@ -20,8 +20,13 @@ from app.assets.objects.multi_device_game import MultiDeviceGame
 from app.assets.objects.qr_code import QRCode
 from app.assets.objects.secret_words_queue import SecretWordsQueue
 from app.database.models import User
-from app.dependencies import multi_device_games_dependency, database_session, secret_words_dependency, \
-    multi_device_players_dependency, qr_codes_dependency
+from app.dependencies import (
+    multi_device_games_dependency,
+    database_session,
+    secret_words_dependency,
+    multi_device_players_dependency,
+    qr_codes_dependency
+)
 
 multi_device_games_router = APIRouter(prefix="/multi_device_games", tags=["Multi_device_games"])
 
@@ -31,7 +36,7 @@ multi_device_games_router = APIRouter(prefix="/multi_device_games", tags=["Multi
     status_code=status.HTTP_201_CREATED,
     response_model=MultiDeviceGameModel,
     dependencies=[Authenticator.verify_api_key()],
-    description="Create a multi device game"
+    name="Create a multi-device game"
 )
 async def create_multi_device_game(
         game_model: CreateMultiDeviceGameModel,
@@ -52,6 +57,13 @@ async def create_multi_device_game(
             Depends(secret_words_dependency)
         ]
 ) -> MultiDeviceGameModel:
+    """
+    Create a new multi-device game.
+
+    Returns status code ```404``` if the user does not exist and 409 if you are already hosting a multi-device game,
+    otherwise returns status code ```201``` and a created game model.
+    """
+
     user: User | None = await session.scalar(
         select(User)
         .filter_by(id=game_model.host_id)
@@ -78,7 +90,7 @@ async def create_multi_device_game(
     status_code=status.HTTP_200_OK,
     response_model=PaginatedResult[MultiDeviceGameModel],
     dependencies=[Authenticator.verify_api_key()],
-    name="Get all multi device games"
+    name="Get all multi-device games"
 )
 async def get_multi_device_games(
         pagination: Annotated[PaginationParams, Depends()],
@@ -91,6 +103,12 @@ async def get_multi_device_games(
             Depends(multi_device_players_dependency)
         ]
 ) -> PaginatedResult[MultiDeviceGameModel]:
+    """
+    Retrieve a list of multi-device games.
+
+    Returns a list of game models. Accepts pagination parameters.
+    """
+
     games: Tuple[MultiDeviceGame, ...] = await games_controller.all(
         limit=pagination.limit,
         offset=pagination.offset,
@@ -109,7 +127,7 @@ async def get_multi_device_games(
     status_code=status.HTTP_200_OK,
     response_model=MultiDeviceGameModel,
     dependencies=[Authenticator.verify_api_key()],
-    name="Get multi device game by UUID"
+    name="Get multi-device game by UUID"
 )
 async def get_multi_device_game_by_uuid(
         game_id: UUID,
@@ -122,6 +140,13 @@ async def get_multi_device_game_by_uuid(
             Depends(multi_device_players_dependency)
         ]
 ) -> MultiDeviceGameModel:
+    """
+    Retrieve a multi-device game by UUID.
+
+    Returns status code ```404``` if a game with provided UUID does not exist,
+    otherwise returns status code ```200``` and a retrieved game model.
+    """
+
     game: MultiDeviceGame | None = await games_controller.get(
         game_id,
         players_controller=players_controller,
@@ -139,7 +164,7 @@ async def get_multi_device_game_by_uuid(
     status_code=status.HTTP_200_OK,
     response_model=MultiDeviceGameModel,
     dependencies=[Authenticator.verify_api_key()],
-    name="Get multi device game by user ID"
+    name="Get multi-device game by user ID"
 )
 async def get_multi_device_game_by_user_id(
         user_id: UUID,
@@ -152,6 +177,13 @@ async def get_multi_device_game_by_user_id(
             Depends(multi_device_players_dependency)
         ]
 ) -> MultiDeviceGameModel:
+    """
+    Retrieve a multi-device game by user ID.
+
+    Returns status code ```404``` if a user with provided UUID does not exist or user does not host a game,
+    otherwise returns status code ```200``` and a retrieved game model.
+    """
+
     player: MultiDeviceActivePlayer = await players_controller.get(user_id)
 
     if player is None:
@@ -173,7 +205,7 @@ async def get_multi_device_game_by_user_id(
     "/{game_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Authenticator.verify_api_key()],
-    name="Delete multi device game by UUID"
+    name="Delete multi-device game by UUID"
 )
 async def delete_multi_device_game_by_uuid(
         game_id: UUID,
@@ -191,6 +223,13 @@ async def delete_multi_device_game_by_uuid(
         ],
         background_tasks: BackgroundTasks
 ) -> None:
+    """
+    Delete a multi-device game by user ID.
+
+    Returns status code ```404``` if a game with provided UUID does not exist,
+    otherwise returns status code ```204```.
+    """
+
     game: MultiDeviceGame | None = await games_controller.get(
         game_id,
         players_controller=players_controller,
@@ -213,10 +252,10 @@ async def delete_multi_device_game_by_uuid(
 
 @multi_device_games_router.post(
     "/{game_id}/join/{user_id}",
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_202_ACCEPTED,
     response_model=MultiDeviceGameModel,
     dependencies=[Authenticator.verify_api_key()],
-    description="Join multi device game by UUID"
+    name="Join multi-device game by UUID"
 )
 async def join_multi_device_game_by_uuid(
         game_id: UUID,
@@ -231,6 +270,16 @@ async def join_multi_device_game_by_uuid(
             Depends(multi_device_players_dependency)
         ]
 ) -> MultiDeviceGameModel:
+    """
+    Join a multi-device game by game ID and user ID.
+
+    Returns status code ```404``` if a user or game with provided UUID does not exist,
+    ```400``` if a game has already started,
+    ```409``` if a user is already in game
+    and ```406``` if a game has too many players,
+    otherwise returns status code ```202``` and a game model with a new player.
+    """
+
     user: User = await session.scalar(
         select(User)
         .filter_by(id=user_id)
@@ -259,13 +308,12 @@ async def join_multi_device_game_by_uuid(
 
 @multi_device_games_router.post(
     "/{game_id}/leave/{user_id}",
-    status_code=status.HTTP_200_OK,
+    status_code=status.HTTP_202_ACCEPTED,
     response_model=MultiDeviceGameModel,
     dependencies=[Authenticator.verify_api_key()],
-    description="Leave multi device game by UUID"
+    name="Leave multi-device game by UUID"
 )
 async def leave_multi_device_game_by_uuid(
-        game_id: UUID,
         user_id: UUID,
         games_controller: Annotated[
             RedisController[MultiDeviceGame],
@@ -276,8 +324,21 @@ async def leave_multi_device_game_by_uuid(
             Depends(multi_device_players_dependency)
         ]
 ) -> MultiDeviceGameModel:
+    """
+    Leave a multi-device game by game ID and user ID.
+
+    Returns status code ```404``` if a user with provided UUID does not exist or user does not host a game
+    and ```409``` if a user is not in game,
+    otherwise returns status code ```202``` and a game model without a left player.
+    """
+
+    player: MultiDeviceActivePlayer = await players_controller.get(user_id)
+
+    if player is None:
+        raise NotFoundError("User with provided UUID was not found")
+
     game: MultiDeviceGame | None = await games_controller.get(
-        game_id,
+        player.game_id,
         players_controller=players_controller,
         from_json_method=MultiDeviceGame.from_json_and_controllers
     )
@@ -295,7 +356,7 @@ async def leave_multi_device_game_by_uuid(
     status_code=status.HTTP_202_ACCEPTED,
     response_model=MultiDeviceGameModel,
     dependencies=[Authenticator.verify_api_key()],
-    description="Start multi device game by UUID"
+    name="Start multi device game by UUID"
 )
 async def start_multi_device_game_by_uuid(
         game_id: UUID,
@@ -313,6 +374,15 @@ async def start_multi_device_game_by_uuid(
         ],
         background_tasks: BackgroundTasks
 ) -> MultiDeviceGameModel:
+    """
+    Start a multi-device game by game ID.
+
+    Returns status code ```404``` if a game with provided UUID does not exist,
+    ```400``` if a game has already started
+    and ```406``` if a game has too few players,
+    otherwise returns status code ```202``` and a started game model.
+    """
+
     game: MultiDeviceGame | None = await games_controller.get(
         game_id,
         players_controller=players_controller,
@@ -340,7 +410,7 @@ async def start_multi_device_game_by_uuid(
     status_code=status.HTTP_202_ACCEPTED,
     response_model=MultiDeviceGameModel,
     dependencies=[Authenticator.verify_api_key()],
-    description="Restart multi device game by UUID"
+    name="Restart multi device game by UUID"
 )
 async def restart_multi_device_game_by_uuid(
         game_id: UUID,
@@ -357,6 +427,14 @@ async def restart_multi_device_game_by_uuid(
             Depends(secret_words_dependency)
         ]
 ) -> MultiDeviceGameModel:
+    """
+    Restart a multi-device game by game ID.
+
+    Returns status code ```404``` if a game with provided UUID does not exist
+    and ```409``` if a user is already in game,
+    otherwise returns status code ```202``` and a new game model.
+    """
+
     game: MultiDeviceGame | None = await games_controller.get(
         game_id,
         players_controller=players_controller,
@@ -379,7 +457,7 @@ async def restart_multi_device_game_by_uuid(
     status_code=status.HTTP_201_CREATED,
     response_model=MultiDeviceGameModel,
     dependencies=[Authenticator.verify_api_key()],
-    description="Generate multi device game QR code by UUID"
+    name="Generate multi device game QR code by UUID"
 )
 async def generate_qr_code_by_uuid(
         game_id: UUID,
@@ -396,6 +474,13 @@ async def generate_qr_code_by_uuid(
             Depends(qr_codes_dependency)
         ]
 ) -> MultiDeviceGameModel:
+    """
+    Generate a QR-Code for a multi-device game by game ID.
+
+    Returns status code ```404``` if a game with provided UUID does not exist,
+    otherwise returns status code ```201``` and a game model with a valid QR-Code URL.
+    """
+
     game: MultiDeviceGame | None = await games_controller.get(
         game_id,
         players_controller=players_controller,

@@ -5,7 +5,14 @@ from pydantic_settings import BaseSettings
 
 
 class Config(BaseSettings):
-    title: ClassVar[str] = "SpotTheSpy"
+    """
+    Main config class.
+
+    Provides access credentials for all Back-End services, and an API Key for endpoint access.
+    """
+
+    TITLE: ClassVar[str] = "SpotTheSpy"
+
     api_key: SecretStr
 
     database_dsn: SecretStr
@@ -20,4 +27,4 @@ class Config(BaseSettings):
     s3_remote_dsn: SecretStr | None = None
 
     rabbitmq_dsn: SecretStr
-    result_backend_dsn: SecretStr | None = None
+    result_backend_dsn: str = "rpc://"

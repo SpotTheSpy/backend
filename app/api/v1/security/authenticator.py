@@ -12,21 +12,35 @@ from config import Config
 
 
 class Authenticator:
-    api_key_header = APIKeyHeader(name="API-Key")
+    """
+    API Authentication tool.
+
+    Verifies API Key by using a corresponding dependency method.
+    """
+
+    API_KEY_HEADER = APIKeyHeader(name="API-Key")
 
     def __init__(
             self,
             *,
-            api_key: str
+            api_key: str,
+            hasher: PasswordHasher | None = None,
     ) -> None:
+        """
+        Authenticator constructor.
+
+        :param api_key: API Key to verify.
+        :param hasher: Password hasher instance. If None, a default instance is used.
+        """
+
         self._api_key = api_key
-        self._ph = PasswordHasher()
+        self._hasher = hasher or PasswordHasher()
 
     async def hash(
             self,
             string: str
     ) -> str:
-        return await asyncio.to_thread(self._ph.hash, string)
+        return await asyncio.to_thread(self._hasher.hash, string)
 
     async def verify(
             self,
@@ -34,19 +48,35 @@ class Authenticator:
             hashed_string: str
     ) -> bool:
         try:
-            await asyncio.to_thread(self._ph.verify, hashed_string, string)
+            await asyncio.to_thread(self._hasher.verify, hashed_string, string)
             return True
         except VerifyMismatchError:
             return False
 
     @staticmethod
     def dependency(config: Annotated[Config, Depends(config_dependency)]) -> 'Authenticator':
+        """
+        Authenticator dependency.
+
+        Creates authenticator instance.
+
+        :param config: Config dependency (Provided by FastAPI).
+        :return: Authenticator instance.
+        """
+
         return Authenticator(api_key=config.api_key.get_secret_value())
 
     @staticmethod
     def verify_api_key() -> Depends:
+        """
+        Dependency method for verifying API Key.
+
+        Should be passed just as a function call.
+        :return: Dependency instance.
+        """
+
         def __verify_api_key(
-                api_key: Annotated[str, Security(Authenticator.api_key_header)],
+                api_key: Annotated[str, Security(Authenticator.API_KEY_HEADER)],
                 config: Annotated[Config, Depends(config_dependency)]
         ) -> None:
             if api_key != config.api_key.get_secret_value():
