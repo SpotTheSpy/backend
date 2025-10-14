@@ -112,7 +112,7 @@ Celery tasks are only required for specific features, sometimes development proc
 
 To start a main Celery worker and a Celery beat, you need to run both of these commands in separate terminals:
 ```bash
-celery -A app.workers.worker.worker worker --concurrency=1 --loglevel=INFO
+celery -A app.workers.worker.worker worker --concurrency=1 --pool=solo --loglevel=INFO
 ```
 ```bash
 celery -A app.workers.worker.worker beat --loglevel=INFO

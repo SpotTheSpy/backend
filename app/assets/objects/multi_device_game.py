@@ -126,6 +126,7 @@ class MultiDeviceGame(AbstractRedisObject):
     def join_url(self) -> str:
         """
         Deeplink start URL for joining game.
+
         :return: URL in a string format.
         """
 
