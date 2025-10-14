@@ -1,6 +1,6 @@
 # SpotTheSpy Backend
 
-A complete guide to set up, locally deploy and use SpotTheSpy Backend infrastructure
+A complete guide to set up, locally deploy and use <b>SpotTheSpy Backend</b> infrastructure
 
 ## System Requirements:
 
@@ -97,7 +97,7 @@ If succeeded, then most likely your .env configuration and containers are set up
 
 ### Start ASGI Server
 
-To start an ASGI server, you can run both of these commands:
+To start an ASGI server, you can run either one of these commands:
 ```bash
 python main.py
 ```
@@ -105,3 +105,35 @@ python main.py
 uvicorn --host 0.0.0.0 --port 8000 --loop asyncio --log-config app/logging.json app.asgi:app
 ```
 Or just create a PyCharm run configuration of a ```main.py``` script.
+
+### Start Celery Workers
+
+Celery tasks are only required for specific features, sometimes development process may not require them.
+
+To start a main Celery worker and a Celery beat, you need to run both of these commands in separate terminals:
+```bash
+celery -A app.workers.worker.worker worker --concurrency=1 --loglevel=INFO
+```
+```bash
+celery -A app.workers.worker.worker beat --loglevel=INFO
+```
+
+## Usage
+
+- Root API path provided by an ASGI server: http://localhost:8000/api
+- API Swagger with each endpoint listed, documented and ready to use: http://localhost:8000/docs
+- MinIO storage manager: http://localhost:9000
+- RabbitMQ manager: http://localhost:5673
+
+PostgreSQL's management via ```pgAdmin``` is accessible with these credentials:
+- Username: ```postgres```
+- Password: ```{Password in .postgres.env file}```
+- Hostname: ```localhost```
+- Port: ```5433```
+- Database name: ```SpotTheSpy```
+
+Redis' management via ```Redis Insight``` is accessible with these credentials:
+- Username: ```default```
+- Password: ```{Password in redis.conf file}```
+- Hostname: ```localhost```
+- Port: ```6379```
