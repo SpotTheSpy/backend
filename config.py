@@ -86,7 +86,7 @@ class Config(BaseSettings):
     Count of words required to view in any game to be able to be repeated.
     """
 
-    telegram_bot_start_url: str = "https://t.me/SpotTheSpyBot?start={payload}"
+    telegram_bot_start_url: str
     """
     Telegram bot URL template used to generate a bot deeplink.
     """
