@@ -13,15 +13,15 @@ from app.api.v1.exceptions.invalid_player_amount import InvalidPlayerAmountError
 from app.api.v1.exceptions.not_in_game import NotInGameError
 from app.assets.controllers.redis import RedisController
 from app.assets.controllers.s3 import S3Controller
-from app.assets.enums.payload_type import PayloadType
+from app.assets.enums.payload import Payload
 from app.assets.enums.player_role import PlayerRole
 from app.assets.objects.multi_device_active_player import MultiDeviceActivePlayer
 from app.assets.objects.multi_device_player import MultiDevicePlayer
 from app.assets.objects.qr_code import QRCode
 from app.assets.objects.redis import AbstractRedisObject
 from app.assets.objects.secret_words_queue import SecretWordsQueue
-from app.assets.parameters import Parameters
 from app.workers.tasks import generate_qr_code_task
+from config import config
 
 
 class MultiDeviceGame(AbstractRedisObject):
@@ -131,9 +131,9 @@ class MultiDeviceGame(AbstractRedisObject):
         """
 
         # Works the same as an aiogram payload encoding.
-        payload: str = f"{PayloadType.JOIN}:{self.game_id}"
+        payload: str = f"{Payload.JOIN}:{self.game_id}"
         encoded_payload: str = urlsafe_b64encode(payload.encode("utf-8")).decode("utf-8").replace("=", "")
-        return Parameters.TELEGRAM_BOT_START_URL.format(payload=encoded_payload)
+        return config.telegram_bot_start_url.format(payload=encoded_payload)
 
     @classmethod
     def new(
@@ -388,7 +388,7 @@ class MultiDeviceGame(AbstractRedisObject):
 
         if self.has_started:
             raise GameHasAlreadyStartedError("Game has already started")
-        if len(self.players) < Parameters.MIN_PLAYER_AMOUNT:
+        if len(self.players) < config.min_player_amount:
             raise InvalidPlayerAmountError("Game has too few players")
 
         self.has_started = True

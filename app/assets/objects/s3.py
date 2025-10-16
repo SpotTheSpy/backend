@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import ClassVar, Any
+from typing import ClassVar
 
 from app.assets.objects.abstract import AbstractObject
 

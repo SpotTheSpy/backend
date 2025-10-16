@@ -20,7 +20,7 @@ from app.assets.objects.single_device_active_player import SingleDeviceActivePla
 from app.assets.objects.single_device_game import SingleDeviceGame
 from app.database.database import Database
 from app.logging import logger
-from config import Config
+from config import config
 
 
 @asynccontextmanager
@@ -37,7 +37,6 @@ async def lifespan(fastapi_app: FastAPI) -> AsyncContextManager[None]:
     await fastapi_app.state.redis.close()
 
 
-config = Config(_env_file=".env")
 database = Database.from_dsn(config.database_dsn.get_secret_value())
 redis = Redis.from_url(config.redis_dsn.get_secret_value())
 s3_config = S3Config.from_config(config)

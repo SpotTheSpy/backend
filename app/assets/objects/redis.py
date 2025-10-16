@@ -70,7 +70,7 @@ class AbstractRedisObject(AbstractObject, ABC):
 
     async def save(self, *, expire: int | None = None) -> None:
         """
-        Save the object to Redis.
+        Save an object to Redis.
 
         :param expire: Expiration time in seconds.
         """
@@ -79,7 +79,7 @@ class AbstractRedisObject(AbstractObject, ABC):
 
     async def clear(self) -> None:
         """
-        Clear the object from Redis.
+        Clear an object from Redis.
         """
 
         await self.controller.remove(self.primary_key)

@@ -46,13 +46,19 @@ S3_USERNAME=minio
 S3_PASSWORD={MinIO Password}
 
 RABBITMQ_DSN=amqp://rabbitmq:{RabbitMQ Password}@localhost:5672/
+
+TELEGRAM_BOT_START_URL=https://t.me/{Bot Username}?start={payload}
 ```
-Replace placeholders in curly brackets with any value, and if necessary, you can also add these optional variables:
+Replace placeholders in curly brackets with any value (Except for payload, this should be in curly brackets for formatting), 
+and if necessary, you can also add these optional variables:
 ```
 TEST_DATABASE_DSN={Database DSN}  # Database for running tests
 S3_REGION={AWS Region}  # Region of an AWS server
 S3_REMOTE_DSN={S3 Remote DSN}  # DSN for generating direct URLs
 RESULT_BACKEND_DSN={Result Backend DSN}  # DSN for celery task results retrieval
+
+MIN_PLAYER_AMOUNT={Value}
+MAX_PLAYER_AMOUNT={Value}
 ```
 - Create ```.postgres.env``` with this structure:
 ```

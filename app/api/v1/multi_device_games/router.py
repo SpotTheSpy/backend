@@ -307,7 +307,7 @@ async def join_multi_device_game_by_uuid(
 
 
 @multi_device_games_router.post(
-    "/{game_id}/leave/{user_id}",
+    "/leave/{user_id}",
     status_code=status.HTTP_202_ACCEPTED,
     response_model=MultiDeviceGameModel,
     dependencies=[Authenticator.verify_api_key()],

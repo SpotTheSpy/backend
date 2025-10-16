@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from app.assets.enums.player_role import PlayerRole
 from app.assets.objects.multi_device_game import MultiDeviceGame
 from app.assets.objects.multi_device_player import MultiDevicePlayer
-from app.assets.parameters import Parameters
+from config import config
 
 
 class MultiDevicePlayerModel(BaseModel):
@@ -125,7 +125,7 @@ class MultiDeviceGameModel(BaseModel):
     Is the game started.
     """
 
-    player_amount: int = Field(ge=Parameters.MIN_PLAYER_AMOUNT, le=Parameters.MAX_PLAYER_AMOUNT)
+    player_amount: int = Field(ge=config.min_player_amount, le=config.max_player_amount)
     """
     Count of max players who can join.
     """
@@ -193,7 +193,7 @@ class CreateMultiDeviceGameModel(BaseModel):
     Host UUID.
     """
 
-    player_amount: int = Field(ge=Parameters.MIN_PLAYER_AMOUNT, le=Parameters.MAX_PLAYER_AMOUNT)
+    player_amount: int = Field(ge=config.min_player_amount, le=config.max_player_amount)
     """
     Count of max players who can join.
     """

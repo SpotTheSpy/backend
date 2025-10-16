@@ -4,7 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field, ConfigDict
 
 from app.assets.objects.single_device_game import SingleDeviceGame
-from app.assets.parameters import Parameters
+from config import config
 
 
 class SingleDeviceGameModel(BaseModel):
@@ -43,7 +43,7 @@ class SingleDeviceGameModel(BaseModel):
     Host UUID.
     """
 
-    player_amount: int = Field(ge=Parameters.MIN_PLAYER_AMOUNT, le=Parameters.MAX_PLAYER_AMOUNT)
+    player_amount: int = Field(ge=config.min_player_amount, le=config.max_player_amount)
     """
     Count of players.
     """
@@ -104,7 +104,7 @@ class CreateSingleDeviceGameModel(BaseModel):
     Host UUID.
     """
 
-    player_amount: int = Field(ge=Parameters.MIN_PLAYER_AMOUNT, le=Parameters.MAX_PLAYER_AMOUNT)
+    player_amount: int = Field(ge=config.min_player_amount, le=config.max_player_amount)
     """
     Count of players.
     """

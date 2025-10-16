@@ -6,7 +6,7 @@ from pydantic import Field
 
 from app.assets.controllers.redis import RedisController
 from app.assets.objects.redis import AbstractRedisObject
-from app.assets.parameters import Parameters
+from config import config
 
 with open("app/assets/data/secret_words.txt", "r", encoding="utf-8") as file:
     _SECRET_WORDS: Set[str] = set(file.read().splitlines())
@@ -34,7 +34,7 @@ class SecretWordsQueue(AbstractRedisObject):
     List of last secret words.
     """
 
-    guaranteed_unique_count: int = Parameters.GUARANTEED_UNIQUE_WORDS_COUNT
+    guaranteed_unique_count: int = config.guaranteed_unique_words_count
     """
     Count of guaranteed unique words.
     """

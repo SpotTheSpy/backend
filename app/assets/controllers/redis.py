@@ -5,7 +5,7 @@ from redis.asyncio import Redis
 
 from app.assets.controllers.abstract import AbstractController
 from app.assets.objects.redis import AbstractRedisObject
-from app.assets.parameters import Parameters
+from config import config
 
 T = TypeVar('T', bound=AbstractRedisObject)
 
@@ -41,7 +41,7 @@ class RedisController(AbstractController, Generic[T]):
         """
 
         self._redis: Redis = redis
-        self._default_key: str = default_key or Parameters.DEFAULT_REDIS_KEY
+        self._default_key: str = default_key or config.default_redis_key
 
     @property
     def key(self) -> str:
