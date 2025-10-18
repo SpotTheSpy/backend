@@ -5,11 +5,10 @@ from uuid import UUID
 from pydantic import Field
 
 from app.assets.controllers.redis import RedisController
+from app.assets.data.secret_words.secret_words import get_secret_words
+from app.assets.enums.category import Category
 from app.assets.objects.redis import AbstractRedisObject
 from config import config
-
-with open("app/assets/data/secret_words.txt", "r", encoding="utf-8") as file:
-    _SECRET_WORDS: Set[str] = set(file.read().splitlines())
 
 
 class SecretWordsQueue(AbstractRedisObject):
@@ -18,11 +17,6 @@ class SecretWordsQueue(AbstractRedisObject):
     """
 
     key: ClassVar[str] = "secret_words"
-
-    _SECRET_WORDS: ClassVar[Set[str]] = _SECRET_WORDS
-    """
-    Set of all available secret words.
-    """
 
     user_id: UUID
     """
@@ -68,7 +62,10 @@ class SecretWordsQueue(AbstractRedisObject):
 
         return queue
 
-    async def get_unique_word(self) -> str:
+    async def get_unique_word(
+            self,
+            category: Category = Category.GENERAL
+    ) -> str:
         """
         Retrieve a new random unique word.
 
@@ -77,7 +74,8 @@ class SecretWordsQueue(AbstractRedisObject):
         :return: Secret word tag as a string.
         """
 
-        available_words: Set[str] = self._SECRET_WORDS - set(self.secret_words) or self._SECRET_WORDS
+        possible_words: Set[str] = get_secret_words(category)
+        available_words: Set[str] = possible_words - set(self.secret_words) or possible_words
 
         word: str = choice(list(available_words))
 
