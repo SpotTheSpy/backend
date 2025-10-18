@@ -147,6 +147,7 @@ class MultiDeviceGame(AbstractRedisObject):
             host_id: UUID,
             player_amount: int,
             secret_word: str,
+            category: Category = Category.GENERAL,
             qr_code_url: str | None = None,
             *,
             controller: RedisController[Self],
@@ -158,6 +159,7 @@ class MultiDeviceGame(AbstractRedisObject):
         :param host_id: Host UUID.
         :param player_amount: Count of max players who can join.
         :param secret_word: Game's secret word tag.
+        :param category: Secret word category.
         :param qr_code_url: QR code URL for a direct image download, can be None.
         :param controller: Multi-device games controller instance.
         :param players_controller: Players controller instance.
@@ -168,6 +170,7 @@ class MultiDeviceGame(AbstractRedisObject):
             host_id=host_id,
             player_amount=player_amount,
             secret_word=secret_word,
+            category=category,
             qr_code_url=qr_code_url
         )
         game._controller = controller
@@ -209,6 +212,7 @@ class MultiDeviceGame(AbstractRedisObject):
             telegram_id: int,
             first_name: str,
             player_amount: int,
+            category: Category = Category.GENERAL,
             *,
             games_controller: RedisController[Self],
             players_controller: RedisController[MultiDeviceActivePlayer],
@@ -225,6 +229,7 @@ class MultiDeviceGame(AbstractRedisObject):
         :param telegram_id: Host's telegram ID.
         :param first_name: Host's first name.
         :param player_amount: Count of max players who can join.
+        :param category: Secret word category.
         :param games_controller: Multi-device games controller instance.
         :param players_controller: Players controller instance.
         :param secret_words_controller: Secret words queue controller instance.
@@ -243,12 +248,13 @@ class MultiDeviceGame(AbstractRedisObject):
                 host_id,
                 controller=secret_words_controller
             )
-        secret_word: str = await queue.get_unique_word()
+        secret_word: str = await queue.get_unique_word(category)
 
         game = cls.new(
             host_id=host_id,
             player_amount=player_amount,
             secret_word=secret_word,
+            category=category,
             controller=games_controller,
             players_controller=players_controller
         )

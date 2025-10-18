@@ -82,6 +82,7 @@ class SingleDeviceGameModel(BaseModel):
             user_id=game.user_id,
             player_amount=game.player_amount,
             secret_word=game.secret_word,
+            category=game.category,
             spy_index=game.spy_index
         )
 

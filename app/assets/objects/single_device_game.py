@@ -90,6 +90,7 @@ class SingleDeviceGame(AbstractRedisObject):
             user_id: UUID,
             player_amount: int,
             secret_word: str,
+            category: Category,
             *,
             controller: RedisController[Self],
             players_controller: RedisController[SingleDeviceActivePlayer]
@@ -100,6 +101,7 @@ class SingleDeviceGame(AbstractRedisObject):
         :param user_id: Host UUID.
         :param player_amount: Count of players.
         :param secret_word: Game's secret word tag.
+        :param category: Secret word category.
         :param controller: Single-device games controller instance.
         :param players_controller: Players controller instance.
         :return: New single-device game instance.
@@ -109,6 +111,7 @@ class SingleDeviceGame(AbstractRedisObject):
             user_id=user_id,
             player_amount=player_amount,
             secret_word=secret_word,
+            category=category,
             spy_index=randint(0, player_amount - 1)
         )
         game._controller = controller
@@ -148,6 +151,7 @@ class SingleDeviceGame(AbstractRedisObject):
             cls,
             user_id: UUID,
             player_amount: int,
+            category: Category = Category.GENERAL,
             *,
             games_controller: RedisController[Self],
             players_controller: RedisController[SingleDeviceActivePlayer],
@@ -161,6 +165,7 @@ class SingleDeviceGame(AbstractRedisObject):
 
         :param user_id: Host UUID.
         :param player_amount: Count of players.
+        :param category: Secret word category.
         :param games_controller: Single-device games controller instance.
         :param players_controller: Players controller instance.
         :param secret_words_controller: Secret words controller instance.
@@ -178,12 +183,13 @@ class SingleDeviceGame(AbstractRedisObject):
                 user_id,
                 controller=secret_words_controller
             )
-        secret_word: str = await queue.get_unique_word()
+        secret_word: str = await queue.get_unique_word(category)
 
         game = cls.new(
             user_id=user_id,
             player_amount=player_amount,
             secret_word=secret_word,
+            category=category,
             controller=games_controller,
             players_controller=players_controller
         )
@@ -233,6 +239,7 @@ class SingleDeviceGame(AbstractRedisObject):
         return await cls.host(
             game.user_id,
             game.player_amount,
+            game.category,
             games_controller=game.controller,
             players_controller=game.players_controller,
             secret_words_controller=secret_words_controller

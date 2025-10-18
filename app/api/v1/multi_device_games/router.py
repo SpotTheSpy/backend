@@ -77,6 +77,7 @@ async def create_multi_device_game(
         user.telegram_id,
         user.first_name,
         game_model.player_amount,
+        game_model.category,
         games_controller=games_controller,
         players_controller=players_controller,
         secret_words_controller=secret_words_controller
