@@ -13,6 +13,7 @@ from app.api.v1.exceptions.invalid_player_amount import InvalidPlayerAmountError
 from app.api.v1.exceptions.not_in_game import NotInGameError
 from app.assets.controllers.redis import RedisController
 from app.assets.controllers.s3 import S3Controller
+from app.assets.enums.category import Category
 from app.assets.enums.payload import Payload
 from app.assets.enums.player_role import PlayerRole
 from app.assets.objects.multi_device_active_player import MultiDeviceActivePlayer
@@ -49,6 +50,11 @@ class MultiDeviceGame(AbstractRedisObject):
     secret_word: str
     """
     Game's secret word tag.
+    """
+
+    category: Category = Category.GENERAL
+    """
+    Secret word category.
     """
 
     qr_code_url: str | None = None

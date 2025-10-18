@@ -3,6 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field, ConfigDict
 
+from app.assets.enums.category import Category
 from app.assets.enums.player_role import PlayerRole
 from app.assets.objects.multi_device_game import MultiDeviceGame
 from app.assets.objects.multi_device_player import MultiDevicePlayer
@@ -83,6 +84,7 @@ class MultiDeviceGameModel(BaseModel):
         has_started: Is the game started.
         player_amount: Count of max players who can join.
         secret_word: Game's secret word tag.
+        category: Secret word category.
         qr_code_url: QR code URL for a direct image download.
         players: List of game players.
     """
@@ -96,6 +98,7 @@ class MultiDeviceGameModel(BaseModel):
                     "has_started": True,
                     "player_amount": 4,
                     "secret_word": "apple",
+                    "category": Category.GENERAL,
                     "qr_code_url": "https://example.com/qr.jpg",
                     "players": [
                         {
@@ -135,6 +138,11 @@ class MultiDeviceGameModel(BaseModel):
     Game's secret word tag.
     """
 
+    category: Category = Field(min_length=2, max_length=32)
+    """
+    Secret word category.
+    """
+
     qr_code_url: str | None = Field(min_length=16, default=None)
     """
     QR code URL for a direct image download.
@@ -163,6 +171,7 @@ class MultiDeviceGameModel(BaseModel):
             has_started=game.has_started,
             player_amount=game.player_amount,
             secret_word=game.secret_word,
+            category=game.category,
             qr_code_url=game.qr_code_url,
             players=[MultiDevicePlayerModel.from_player(player) for player in game.players.values()]
         )
@@ -175,6 +184,7 @@ class CreateMultiDeviceGameModel(BaseModel):
     Attributes:
         host_id: Host UUID.
         player_amount: Count of max players who can join.
+        category: Secret word category.
     """
 
     model_config = ConfigDict(
@@ -182,7 +192,8 @@ class CreateMultiDeviceGameModel(BaseModel):
             "examples": [
                 {
                     "host_id": "Host UUID",
-                    "player_amount": 4
+                    "player_amount": 4,
+                    "category": Category.GENERAL
                 }
             ]
         }
@@ -196,4 +207,9 @@ class CreateMultiDeviceGameModel(BaseModel):
     player_amount: int = Field(ge=config.min_player_amount, le=config.max_player_amount)
     """
     Count of max players who can join.
+    """
+
+    category: Category = Field(min_length=2, max_length=32, default=Category.GENERAL)
+    """
+    Secret word category.
     """

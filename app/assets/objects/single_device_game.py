@@ -6,6 +6,7 @@ from pydantic import Field
 
 from app.api.v1.exceptions.already_in_game import AlreadyInGameError
 from app.assets.controllers.redis import RedisController
+from app.assets.enums.category import Category
 from app.assets.objects.redis import AbstractRedisObject
 from app.assets.objects.secret_words_queue import SecretWordsQueue
 from app.assets.objects.single_device_active_player import SingleDeviceActivePlayer
@@ -36,6 +37,11 @@ class SingleDeviceGame(AbstractRedisObject):
     secret_word: str
     """
     Game's secret word tag.
+    """
+
+    category: Category = Category.GENERAL
+    """
+    Secret word category.
     """
 
     spy_index: int
