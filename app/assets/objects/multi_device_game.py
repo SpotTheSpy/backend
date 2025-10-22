@@ -1,7 +1,6 @@
 import asyncio
 from base64 import urlsafe_b64encode
-from random import randint
-from typing import Any, ClassVar, Dict, List, Self
+from typing import Any, ClassVar, Dict, List, Self, Tuple
 from uuid import UUID, uuid4
 
 from celery.result import AsyncResult
@@ -16,6 +15,7 @@ from app.assets.controllers.s3 import S3Controller
 from app.assets.enums.category import Category
 from app.assets.enums.payload import Payload
 from app.assets.enums.player_role import PlayerRole
+from app.assets.enums.spy_count import SpyCount
 from app.assets.objects.multi_device_active_player import MultiDeviceActivePlayer
 from app.assets.objects.multi_device_player import MultiDevicePlayer
 from app.assets.objects.qr_code import QRCode
@@ -55,6 +55,11 @@ class MultiDeviceGame(AbstractRedisObject):
     category: Category = Category.GENERAL
     """
     Secret word category.
+    """
+
+    spy_count: SpyCount
+    """
+    Count of spies.
     """
 
     qr_code_url: str | None = None
@@ -148,6 +153,7 @@ class MultiDeviceGame(AbstractRedisObject):
             player_amount: int,
             secret_word: str,
             category: Category = Category.GENERAL,
+            spy_count: SpyCount = SpyCount.SINGLE,
             qr_code_url: str | None = None,
             *,
             controller: RedisController[Self],
@@ -160,6 +166,7 @@ class MultiDeviceGame(AbstractRedisObject):
         :param player_amount: Count of max players who can join.
         :param secret_word: Game's secret word tag.
         :param category: Secret word category.
+        :param spy_count: Count of spies.
         :param qr_code_url: QR code URL for a direct image download, can be None.
         :param controller: Multi-device games controller instance.
         :param players_controller: Players controller instance.
@@ -171,6 +178,7 @@ class MultiDeviceGame(AbstractRedisObject):
             player_amount=player_amount,
             secret_word=secret_word,
             category=category,
+            spy_count=spy_count,
             qr_code_url=qr_code_url
         )
         game._controller = controller
@@ -213,6 +221,7 @@ class MultiDeviceGame(AbstractRedisObject):
             first_name: str,
             player_amount: int,
             category: Category = Category.GENERAL,
+            spy_count: SpyCount = SpyCount.SINGLE,
             *,
             games_controller: RedisController[Self],
             players_controller: RedisController[MultiDeviceActivePlayer],
@@ -230,6 +239,7 @@ class MultiDeviceGame(AbstractRedisObject):
         :param first_name: Host's first name.
         :param player_amount: Count of max players who can join.
         :param category: Secret word category.
+        :param spy_count: Count of spies.
         :param games_controller: Multi-device games controller instance.
         :param players_controller: Players controller instance.
         :param secret_words_controller: Secret words queue controller instance.
@@ -255,6 +265,7 @@ class MultiDeviceGame(AbstractRedisObject):
             player_amount=player_amount,
             secret_word=secret_word,
             category=category,
+            spy_count=spy_count,
             controller=games_controller,
             players_controller=players_controller
         )
@@ -320,6 +331,8 @@ class MultiDeviceGame(AbstractRedisObject):
             host.telegram_id,
             host.first_name,
             game.player_amount,
+            game.category,
+            game.spy_count,
             games_controller=game.controller,
             players_controller=game.players_controller,
             secret_words_controller=secret_words_controller,
@@ -404,10 +417,10 @@ class MultiDeviceGame(AbstractRedisObject):
             raise InvalidPlayerAmountError("Game has too few players")
 
         self.has_started = True
-        spy_index: int = randint(0, len(self.players) - 1)
+        spy_indices: Tuple[int, ...] = self.spy_count.get_indices(self.player_amount)
 
         for index, player in enumerate(self.players.values()):
-            if index == spy_index:
+            if index in spy_indices:
                 player.role = PlayerRole.SPY
             else:
                 player.role = PlayerRole.CITIZEN

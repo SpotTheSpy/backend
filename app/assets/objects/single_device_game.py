@@ -1,5 +1,4 @@
-from random import randint
-from typing import ClassVar, Self, Dict, Any
+from typing import ClassVar, Self, Dict, Any, Tuple
 from uuid import UUID, uuid4
 
 from pydantic import Field
@@ -7,6 +6,7 @@ from pydantic import Field
 from app.api.v1.exceptions.already_in_game import AlreadyInGameError
 from app.assets.controllers.redis import RedisController
 from app.assets.enums.category import Category
+from app.assets.enums.spy_count import SpyCount
 from app.assets.objects.redis import AbstractRedisObject
 from app.assets.objects.secret_words_queue import SecretWordsQueue
 from app.assets.objects.single_device_active_player import SingleDeviceActivePlayer
@@ -44,9 +44,14 @@ class SingleDeviceGame(AbstractRedisObject):
     Secret word category.
     """
 
-    spy_index: int
+    spy_indices: Tuple[int, ...] | None = None
     """
-    Index of a game's spy.
+    Indices of spies in game.
+    """
+
+    spy_count: SpyCount
+    """
+    Count of spies.
     """
 
     game_id: UUID = Field(default_factory=uuid4)
@@ -54,13 +59,16 @@ class SingleDeviceGame(AbstractRedisObject):
     UUID.
     """
 
-    def __post_init__(self) -> None:
+    def model_post_init(
+            self,
+            context: Any
+    ) -> None:
         """
-        Set a random spy index after an object initialization.
+        Set a random spy indices after an object initialization.
         """
 
-        if self.spy_index is None:
-            self.spy_index = randint(0, self.player_amount - 1)
+        if self.spy_indices is None:
+            self.spy_indices = self.spy_count.get_indices(self.player_amount)
 
     @property
     def primary_key(self) -> UUID:
@@ -91,6 +99,7 @@ class SingleDeviceGame(AbstractRedisObject):
             player_amount: int,
             secret_word: str,
             category: Category,
+            spy_count: SpyCount,
             *,
             controller: RedisController[Self],
             players_controller: RedisController[SingleDeviceActivePlayer]
@@ -102,6 +111,7 @@ class SingleDeviceGame(AbstractRedisObject):
         :param player_amount: Count of players.
         :param secret_word: Game's secret word tag.
         :param category: Secret word category.
+        :param spy_count: Count of spies.
         :param controller: Single-device games controller instance.
         :param players_controller: Players controller instance.
         :return: New single-device game instance.
@@ -112,7 +122,7 @@ class SingleDeviceGame(AbstractRedisObject):
             player_amount=player_amount,
             secret_word=secret_word,
             category=category,
-            spy_index=randint(0, player_amount - 1)
+            spy_count=spy_count
         )
         game._controller = controller
         game._players_controller = players_controller
@@ -152,6 +162,7 @@ class SingleDeviceGame(AbstractRedisObject):
             user_id: UUID,
             player_amount: int,
             category: Category = Category.GENERAL,
+            spy_count: SpyCount = SpyCount.SINGLE,
             *,
             games_controller: RedisController[Self],
             players_controller: RedisController[SingleDeviceActivePlayer],
@@ -166,6 +177,7 @@ class SingleDeviceGame(AbstractRedisObject):
         :param user_id: Host UUID.
         :param player_amount: Count of players.
         :param category: Secret word category.
+        :param spy_count: Count of spies.
         :param games_controller: Single-device games controller instance.
         :param players_controller: Players controller instance.
         :param secret_words_controller: Secret words controller instance.
@@ -190,6 +202,7 @@ class SingleDeviceGame(AbstractRedisObject):
             player_amount=player_amount,
             secret_word=secret_word,
             category=category,
+            spy_count=spy_count,
             controller=games_controller,
             players_controller=players_controller
         )
@@ -240,6 +253,7 @@ class SingleDeviceGame(AbstractRedisObject):
             game.user_id,
             game.player_amount,
             game.category,
+            game.spy_count,
             games_controller=game.controller,
             players_controller=game.players_controller,
             secret_words_controller=secret_words_controller

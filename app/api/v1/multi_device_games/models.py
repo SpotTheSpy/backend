@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field, ConfigDict
 
 from app.assets.enums.category import Category
 from app.assets.enums.player_role import PlayerRole
+from app.assets.enums.spy_count import SpyCount
 from app.assets.objects.multi_device_game import MultiDeviceGame
 from app.assets.objects.multi_device_player import MultiDevicePlayer
 from config import config
@@ -85,6 +86,7 @@ class MultiDeviceGameModel(BaseModel):
         player_amount: Count of max players who can join.
         secret_word: Game's secret word tag.
         category: Secret word category.
+        spy_count: Count of spies.
         qr_code_url: QR code URL for a direct image download.
         players: List of game players.
     """
@@ -99,6 +101,7 @@ class MultiDeviceGameModel(BaseModel):
                     "player_amount": 4,
                     "secret_word": "apple",
                     "category": Category.GENERAL,
+                    "spy_count": SpyCount.SINGLE,
                     "qr_code_url": "https://example.com/qr.jpg",
                     "players": [
                         {
@@ -143,6 +146,11 @@ class MultiDeviceGameModel(BaseModel):
     Secret word category.
     """
 
+    spy_count: SpyCount = Field(min_length=2, max_length=32)
+    """
+    Count of spies.
+    """
+
     qr_code_url: str | None = Field(min_length=16, default=None)
     """
     QR code URL for a direct image download.
@@ -172,6 +180,7 @@ class MultiDeviceGameModel(BaseModel):
             player_amount=game.player_amount,
             secret_word=game.secret_word,
             category=game.category,
+            spy_count=game.spy_count,
             qr_code_url=game.qr_code_url,
             players=[MultiDevicePlayerModel.from_player(player) for player in game.players.values()]
         )
@@ -193,7 +202,8 @@ class CreateMultiDeviceGameModel(BaseModel):
                 {
                     "host_id": "Host UUID",
                     "player_amount": 4,
-                    "category": Category.GENERAL
+                    "category": Category.GENERAL,
+                    "spy_count": SpyCount.SINGLE
                 }
             ]
         }
@@ -212,4 +222,9 @@ class CreateMultiDeviceGameModel(BaseModel):
     category: Category = Field(min_length=2, max_length=32, default=Category.GENERAL)
     """
     Secret word category.
+    """
+
+    spy_count: SpyCount = Field(min_length=2, max_length=32, default=SpyCount.SINGLE)
+    """
+    Count of spies.
     """

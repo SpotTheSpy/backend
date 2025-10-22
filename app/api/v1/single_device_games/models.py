@@ -1,9 +1,10 @@
-from typing import Self
+from typing import Self, Tuple
 from uuid import UUID
 
 from pydantic import BaseModel, Field, ConfigDict
 
 from app.assets.enums.category import Category
+from app.assets.enums.spy_count import SpyCount
 from app.assets.objects.single_device_game import SingleDeviceGame
 from config import config
 
@@ -18,7 +19,8 @@ class SingleDeviceGameModel(BaseModel):
         player_amount: Count of players.
         secret_word: Game's secret word tag.
         category: Secret word category.
-        spy_index: Index of a game's spy (From 0 to player amount).
+        spy_indices: Indices of spies games.
+        spy_count: Count of spies.
     """
 
     model_config = ConfigDict(
@@ -29,7 +31,9 @@ class SingleDeviceGameModel(BaseModel):
                     "user_id": "Host UUID",
                     "player_amount": 4,
                     "secret_word": "apple",
-                    "spy_index": 0
+                    "category": "food",
+                    "spy_indices": (1, 2),
+                    "spy_count": "double"
                 }
             ]
         }
@@ -60,9 +64,14 @@ class SingleDeviceGameModel(BaseModel):
     Secret word category.
     """
 
-    spy_index: int = Field(ge=0, le=7)
+    spy_indices: Tuple[int, ...]
     """
-    Index of a game's spy.
+    Indices of spies in game.
+    """
+
+    spy_count: SpyCount = Field(min_length=2, max_length=32)
+    """
+    Count of spies.
     """
 
     @classmethod
@@ -83,7 +92,8 @@ class SingleDeviceGameModel(BaseModel):
             player_amount=game.player_amount,
             secret_word=game.secret_word,
             category=game.category,
-            spy_index=game.spy_index
+            spy_indices=game.spy_indices,
+            spy_count=game.spy_count
         )
 
 
@@ -95,6 +105,7 @@ class CreateSingleDeviceGameModel(BaseModel):
         user_id: Host UUID.
         player_amount: Count of players.
         category: Secret word category.
+        spy_count: Count of spies.
     """
 
     model_config = ConfigDict(
@@ -103,7 +114,8 @@ class CreateSingleDeviceGameModel(BaseModel):
                 {
                     "user_id": "Host UUID",
                     "player_amount": 4,
-                    "category": Category.GENERAL
+                    "category": Category.GENERAL,
+                    "spy_count": SpyCount.SINGLE
                 }
             ]
         }
@@ -122,4 +134,9 @@ class CreateSingleDeviceGameModel(BaseModel):
     category: Category = Field(min_length=2, max_length=32, default=Category.GENERAL)
     """
     Secret word category.
+    """
+
+    spy_count: SpyCount = Field(min_length=2, max_length=32, default=SpyCount.SINGLE)
+    """
+    Count of spies.
     """
