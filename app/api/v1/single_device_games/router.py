@@ -65,6 +65,7 @@ async def create_single_device_game(
         game_model.user_id,
         game_model.player_amount,
         game_model.category,
+        game_model.spy_count,
         games_controller=games_controller,
         players_controller=players_controller,
         secret_words_controller=secret_words_controller
