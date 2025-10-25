@@ -49,7 +49,7 @@ class SingleDeviceGame(AbstractRedisObject):
     Indices of spies in game.
     """
 
-    spy_count: SpyCount
+    spy_count: SpyCount = SpyCount.SINGLE
     """
     Count of spies.
     """

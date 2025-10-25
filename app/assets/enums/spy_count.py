@@ -29,14 +29,20 @@ class SpyCount(StrEnum):
         indices: List[int] = list(range(player_amount))
         shuffle(indices)
 
+        selected_indices = []
+        selected: bool = False
+
         value: Self = self
 
         if value == self.RANDOM:
             chance: float = random()
 
             if chance < 0.1:
-                return tuple()
+                selected = True
+            else:
+                value = self.SINGLE if chance < 0.55 else self.DOUBLE
 
-            value = self.SINGLE if chance < 0.55 else self.DOUBLE
+        if not selected:
+            selected_indices: List[int] = indices[:1] if value == self.SINGLE else indices[:2]
 
-        return tuple(indices[:1]) if value == self.SINGLE else tuple(indices[:2])
+        return tuple(sorted(selected_indices))
